@@ -40,6 +40,34 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
+// AnimatedNumber: casino-style animated number
+function AnimatedNumber({ value, duration = 2500, prefix = 'Rp ' }) {
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    let start = display;
+    let startTime = null;
+    function animate(ts) {
+      if (!startTime) startTime = ts;
+      const progress = Math.min((ts - startTime) / duration, 1);
+      setDisplay(start + (value - start) * progress);
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    }
+    requestAnimationFrame(animate);
+    return () => setDisplay(value);
+    // eslint-disable-next-line
+  }, [value, duration]);
+
+  return (
+    <span>
+      {prefix}
+      {display.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+    </span>
+  );
+}
+
 function Dashboard() {
   const theme = useTheme();
   const [summary, setSummary] = useState({
@@ -407,7 +435,7 @@ function Dashboard() {
                   Total Income
                 </Typography>
                 <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                  {formatCurrency(summary.totalIncome)}
+                  <AnimatedNumber value={summary.totalIncome} />
                 </Typography>
               </Paper>
             </motion.div>
@@ -430,7 +458,7 @@ function Dashboard() {
                   Total Expenses
                 </Typography>
                 <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                  {formatCurrency(summary.totalExpenses)}
+                  <AnimatedNumber value={summary.totalExpenses} />
                 </Typography>
               </Paper>
             </motion.div>
@@ -453,7 +481,7 @@ function Dashboard() {
                   Balance
                 </Typography>
                 <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                  {formatCurrency(summary.balance)}
+                  <AnimatedNumber value={summary.balance} />
                 </Typography>
               </Paper>
             </motion.div>
@@ -480,8 +508,8 @@ function Dashboard() {
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, width: '100%' }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#00f2fe', flex: 1, letterSpacing: 1 }}>
-                  Full Time Income, Expenses, and Balance
+                <Typography variant="h5" sx={{ fontWeight: 600, color: '#00f2fe', flex: 1, letterSpacing: 1 }}>
+                  Total In/Outflow
                 </Typography>
                 <TextField
                   select

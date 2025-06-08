@@ -33,7 +33,7 @@ function Navbar() {
             fontWeight: 600,
           }}
         >
-          Money Tracker
+          Dompetin Aja
         </Typography>
         <Box>
           <Button
