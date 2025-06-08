@@ -51,6 +51,8 @@ function Dashboard() {
     dailyAverages: [],
   });
   const [range, setRange] = useState('all');
+  const [viewType, setViewType] = useState('simple');
+  const [valueMode, setValueMode] = useState('default');
   const [rangeData, setRangeData] = useState([]);
   const rangeOptions = [
     { value: '7d', label: '7 Days' },
@@ -58,6 +60,16 @@ function Dashboard() {
     { value: '6m', label: '6 Months' },
     { value: '1y', label: '1 Year' },
     { value: 'all', label: 'All Time' },
+  ];
+
+  const viewTypeOptions = [
+    { value: 'simple', label: 'Simple' },
+    { value: 'complex', label: 'Complex' },
+  ];
+
+  const valueModeOptions = [
+    { value: 'default', label: 'Default' },
+    { value: 'sum', label: 'Sum' },
   ];
 
   useEffect(() => {
@@ -75,14 +87,24 @@ function Dashboard() {
   useEffect(() => {
     const fetchRangeData = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/transactions/summary-range?range=${range}`);
+        const response = await axios.get(`http://localhost:5000/api/transactions/summary-range?range=${range}&breakdown=${viewType}`);
+        console.log('Fetched data:', response.data); // Debug log
         setRangeData(response.data);
       } catch (error) {
+        console.error('Error fetching range data:', error);
         setRangeData([]);
       }
     };
     fetchRangeData();
-  }, [range]);
+  }, [range, viewType]);
+
+  // Helper to get default or cumulative data
+  function getValueArray(arr) {
+    if (valueMode === 'default') return arr;
+    // Cumulative sum
+    let sum = 0;
+    return arr.map(v => (sum += v));
+  }
 
   const lineRangeData = {
     labels: rangeData.map(d => {
@@ -91,10 +113,10 @@ function Dashboard() {
         ? date.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
         : date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
     }),
-    datasets: [
+    datasets: viewType === 'simple' ? [
       {
         label: 'Income',
-        data: rangeData.map(d => d.income),
+        data: getValueArray(rangeData.map(d => d.income)),
         borderColor: '#00f2fe',
         backgroundColor: 'rgba(0,242,254,0.15)',
         tension: 0.4,
@@ -103,7 +125,7 @@ function Dashboard() {
       },
       {
         label: 'Expenses',
-        data: rangeData.map(d => d.expenses),
+        data: getValueArray(rangeData.map(d => d.expenses)),
         borderColor: '#ff6b6b',
         backgroundColor: 'rgba(255,107,107,0.15)',
         tension: 0.4,
@@ -112,14 +134,67 @@ function Dashboard() {
       },
       {
         label: 'Balance',
-        data: rangeData.map(d => d.balance),
+        data: getValueArray(rangeData.map(d => d.balance)),
         borderColor: '#4facfe',
         backgroundColor: 'rgba(79, 172, 254, 0.15)',
         tension: 0.4,
         fill: false,
         pointRadius: 3,
       },
-    ],
+    ] : (() => {
+      // Collect all unique categories across all data points
+      const incomeCategoriesSet = new Set();
+      const expenseCategoriesSet = new Set();
+      rangeData.forEach(d => {
+        Object.keys(d.incomeBreakdown || {}).forEach(cat => incomeCategoriesSet.add(cat));
+        Object.keys(d.expenseBreakdown || {}).forEach(cat => expenseCategoriesSet.add(cat));
+      });
+      const incomeCategories = Array.from(incomeCategoriesSet);
+      const expenseCategories = Array.from(expenseCategoriesSet);
+
+      const datasets = [];
+
+      // Add income category lines
+      incomeCategories.forEach((category, index) => {
+        datasets.push({
+          label: `Income - ${category}`,
+          data: getValueArray(rangeData.map(d => d.incomeBreakdown?.[category] || 0)),
+          borderColor: `hsl(${index * 30}, 100%, 50%)`,
+          backgroundColor: `hsla(${index * 30}, 100%, 50%, 0.15)`,
+          tension: 0.4,
+          fill: false,
+          pointRadius: 3,
+        });
+      });
+
+      // Add expense category lines
+      expenseCategories.forEach((category, index) => {
+        datasets.push({
+          label: `Expense - ${category}`,
+          data: getValueArray(rangeData.map(d => d.expenseBreakdown?.[category] || 0)),
+          borderColor: `hsl(${index * 30 + 180}, 100%, 50%)`,
+          backgroundColor: `hsla(${index * 30 + 180}, 100%, 50%, 0.15)`,
+          tension: 0.4,
+          fill: false,
+          pointRadius: 3,
+        });
+      });
+
+      // Add balance line
+      datasets.push({
+        label: 'Balance',
+        data: getValueArray(rangeData.map(d => d.balance)),
+        borderColor: '#4facfe',
+        backgroundColor: 'rgba(79, 172, 254, 0.15)',
+        tension: 0.4,
+        fill: false,
+        pointRadius: 3,
+        borderWidth: 2,
+        borderDash: [5, 5],
+      });
+
+      return datasets;
+    })(),
   };
 
   const lineRangeOptions = {
@@ -410,10 +485,32 @@ function Dashboard() {
                 </Typography>
                 <TextField
                   select
+                  value={viewType}
+                  onChange={e => setViewType(e.target.value)}
+                  size="small"
+                  sx={{ minWidth: 120, background: 'rgba(10,25,41,0.7)', borderRadius: 2, ml: 2 }}
+                >
+                  {viewTypeOptions.map(opt => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
+                  value={valueMode}
+                  onChange={e => setValueMode(e.target.value)}
+                  size="small"
+                  sx={{ minWidth: 120, background: 'rgba(10,25,41,0.7)', borderRadius: 2, ml: 2 }}
+                >
+                  {valueModeOptions.map(opt => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
                   value={range}
                   onChange={e => setRange(e.target.value)}
                   size="small"
-                  sx={{ minWidth: 160, ml: 2, background: 'rgba(10,25,41,0.7)', borderRadius: 2 }}
+                  sx={{ minWidth: 160, background: 'rgba(10,25,41,0.7)', borderRadius: 2, ml: 2 }}
                 >
                   {rangeOptions.map(opt => (
                     <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
