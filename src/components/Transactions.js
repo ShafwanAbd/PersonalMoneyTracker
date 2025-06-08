@@ -441,7 +441,7 @@ function Transactions() {
           </Paper>
         </motion.div>
 
-        <motion.div whileHover={{ scale: 1.02, boxShadow: '0 8px 32px rgba(0, 242, 254, 0.18)' }} transition={{ type: 'spring', stiffness: 180, damping: 18 }}>
+        <motion.div whileHover={{ boxShadow: '0 8px 32px rgba(0, 242, 254, 0.18)' }} transition={{ type: 'spring', stiffness: 180, damping: 18 }}>
           <Paper
             elevation={0}
             sx={{
@@ -471,9 +471,11 @@ function Transactions() {
                 size="small"
                 sx={{ minWidth: 100 }}
               >
+                <MenuItem value={5}>5</MenuItem>
                 <MenuItem value={10}>10</MenuItem>
                 <MenuItem value={20}>20</MenuItem>
                 <MenuItem value={50}>50</MenuItem>
+                <MenuItem value={100}>100</MenuItem>
               </TextField>
             </Box>
             <TableContainer>
@@ -502,7 +504,15 @@ function Transactions() {
                     const isExpense = numAmount < 0 || expenseCategories.map(c => c.toLowerCase()).includes((transaction.category || '').toLowerCase());
                     const displayAmount = isExpense ? `- ${formatCurrency(Math.abs(numAmount))}` : formatCurrency(numAmount);
                     return (
-                      <TableRow key={transaction._id}>
+                      <TableRow 
+                        key={transaction._id}
+                        sx={{
+                          '&:hover': {
+                            backgroundColor: 'rgba(0, 242, 254, 0.08)',
+                            transition: 'background-color 0.2s ease',
+                          },
+                        }}
+                      >
                         <TableCell>
                           {new Date(transaction.date).toLocaleDateString('id-ID', {
                             year: 'numeric',
