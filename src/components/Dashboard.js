@@ -127,9 +127,11 @@ function Dashboard() {
   }, [range, viewType]);
 
   // Helper to get default or cumulative data
-  function getValueArray(arr) {
+  function getValueArray(arr, isBalance = false) {
     if (valueMode === 'default') return arr;
-    // Cumulative sum
+    // For balance in sum mode, don't accumulate
+    if (isBalance && valueMode === 'sum') return arr;
+    // Cumulative sum for other cases
     let sum = 0;
     return arr.map(v => (sum += v));
   }
@@ -162,7 +164,7 @@ function Dashboard() {
       },
       {
         label: 'Balance',
-        data: getValueArray(rangeData.map(d => d.balance)),
+        data: getValueArray(rangeData.map(d => d.balance), true),
         borderColor: '#4facfe',
         backgroundColor: 'rgba(79, 172, 254, 0.15)',
         tension: 0.4,
@@ -211,7 +213,7 @@ function Dashboard() {
       // Add balance line
       datasets.push({
         label: 'Balance',
-        data: getValueArray(rangeData.map(d => d.balance)),
+        data: getValueArray(rangeData.map(d => d.balance), true),
         borderColor: '#4facfe',
         backgroundColor: 'rgba(79, 172, 254, 0.15)',
         tension: 0.4,
@@ -434,7 +436,7 @@ function Dashboard() {
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00f2fe' }}>
                   Total Income
                 </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#00ff9d' }}>
                   <AnimatedNumber value={summary.totalIncome} />
                 </Typography>
               </Paper>
@@ -457,7 +459,7 @@ function Dashboard() {
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#4facfe' }}>
                   Total Expenses
                 </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#ff6b6b' }}>
                   <AnimatedNumber value={summary.totalExpenses} />
                 </Typography>
               </Paper>

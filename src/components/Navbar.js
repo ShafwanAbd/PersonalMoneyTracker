@@ -33,7 +33,7 @@ function Navbar() {
             fontWeight: 600,
           }}
         >
-          Dompetin Aja
+          Wallet-In
         </Typography>
         <Box>
           <Button

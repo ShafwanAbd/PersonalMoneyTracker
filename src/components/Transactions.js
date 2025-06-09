@@ -511,6 +511,10 @@ function Transactions() {
                             backgroundColor: 'rgba(0, 242, 254, 0.08)',
                             transition: 'background-color 0.2s ease',
                           },
+                          '& td': {
+                            padding: '8px 16px',
+                            height: '40px'
+                          }
                         }}
                       >
                         <TableCell>
