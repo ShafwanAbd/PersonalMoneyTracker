@@ -151,7 +151,7 @@ function Dashboard() {
         label: 'Income',
         data: getValueArray(rangeData.map(d => d.income)),
         borderColor: '#00f2fe',
-        backgroundColor: 'rgba(0,242,254,0.15)',
+        backgroundColor: 'rgba(0, 242, 254, 0.8)',
         tension: 0.4,
         fill: false,
         pointRadius: 3,
@@ -160,7 +160,7 @@ function Dashboard() {
         label: 'Expenses',
         data: getValueArray(rangeData.map(d => d.expenses)),
         borderColor: '#ff6b6b',
-        backgroundColor: 'rgba(255,107,107,0.15)',
+        backgroundColor: 'rgba(255, 107, 107, 0.8)',
         tension: 0.4,
         fill: false,
         pointRadius: 3,
@@ -169,7 +169,7 @@ function Dashboard() {
         label: 'Balance',
         data: getValueArray(rangeData.map(d => d.balance), true),
         borderColor: '#4facfe',
-        backgroundColor: 'rgba(79, 172, 254, 0.15)',
+        backgroundColor: 'rgba(79, 172, 254, 0.8)',
         tension: 0.4,
         fill: false,
         pointRadius: 3,
@@ -193,7 +193,7 @@ function Dashboard() {
           label: `Income - ${category}`,
           data: getValueArray(rangeData.map(d => d.incomeBreakdown?.[category] || 0)),
           borderColor: `hsl(${index * 30}, 100%, 50%)`,
-          backgroundColor: `hsla(${index * 30}, 100%, 50%, 0.15)`,
+          backgroundColor: `hsla(${index * 30}, 100%, 50%, 0.8)`,
           tension: 0.4,
           fill: false,
           pointRadius: 3,
@@ -206,7 +206,7 @@ function Dashboard() {
           label: `Expense - ${category}`,
           data: getValueArray(rangeData.map(d => d.expenseBreakdown?.[category] || 0)),
           borderColor: `hsl(${index * 30 + 180}, 100%, 50%)`,
-          backgroundColor: `hsla(${index * 30 + 180}, 100%, 50%, 0.15)`,
+          backgroundColor: `hsla(${index * 30 + 180}, 100%, 50%, 0.8)`,
           tension: 0.4,
           fill: false,
           pointRadius: 3,
@@ -218,7 +218,7 @@ function Dashboard() {
         label: 'Balance',
         data: getValueArray(rangeData.map(d => d.balance), true),
         borderColor: '#4facfe',
-        backgroundColor: 'rgba(79, 172, 254, 0.15)',
+        backgroundColor: 'rgba(79, 172, 254, 0.8)',
         tension: 0.4,
         fill: false,
         pointRadius: 3,
@@ -305,7 +305,7 @@ function Dashboard() {
     tooltipEl.style.opacity = 1;
   }
 
-  // Custom plugin for vertical line on hover
+  // Custom plugin for vertical line on hover (for line charts)
   const verticalLinePlugin = {
     id: 'verticalLine',
     afterDraw: (chart) => {
@@ -326,6 +326,55 @@ function Dashboard() {
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+    }
+  };
+
+  // Custom plugin for bar hover highlight
+  const barHoverPlugin = {
+    id: 'barHover',
+    afterDraw: (chart) => {
+      if (chart.tooltip?._active && chart.tooltip._active.length) {
+        const ctx = chart.ctx;
+        ctx.save();
+        
+        // Get all active points to determine the full range
+        const activePoints = chart.tooltip._active;
+        if (activePoints.length > 0) {
+          // Find the minimum and maximum x positions of all active bars
+          let minX = Infinity;
+          let maxX = -Infinity;
+          
+          activePoints.forEach(point => {
+            if (point.element && point.element.x !== undefined) {
+              const barWidth = point.element.width || 20;
+              const barX = point.element.x;
+              const leftX = barX - barWidth / 2;
+              const rightX = barX + barWidth / 2;
+              
+              minX = Math.min(minX, leftX);
+              maxX = Math.max(maxX, rightX);
+            }
+          });
+          
+          if (minX !== Infinity && maxX !== -Infinity) {
+            const topY = chart.scales.y.top;
+            const bottomY = chart.scales.y.bottom;
+            const highlightWidth = maxX - minX;
+            const highlightX = minX;
+            
+            // Draw full column highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fillRect(highlightX, topY, highlightWidth, bottomY - topY);
+            
+            // Draw column border
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(highlightX, topY, highlightWidth, bottomY - topY);
+          }
+        }
+        
         ctx.restore();
       }
     }
@@ -928,43 +977,110 @@ function Dashboard() {
                 </TextField>
               </Box>
               <Box sx={{width: '100%', px: 0, m: 0 }}>
-                <Line
-                  data={lineRangeData}
-                  options={{
-                    ...lineRangeOptions,
-                    animation: {
-                      duration: 1800,
-                      easing: 'easeInOutQuart',
-                    },
-                    elements: {
-                      line: {
-                        borderWidth: 3,
-                        cubicInterpolationMode: 'monotone',
-                        borderColor: ctx => ctx.datasetIndex === 2 ? '#4facfe' : undefined,
-                        backgroundColor: 'transparent',
-                        shadowBlur: 10,
-                        shadowColor: ctx => ctx.datasetIndex === 0 ? '#00f2fe' : ctx.datasetIndex === 1 ? '#ff6b6b' : '#4facfe',
+                {valueMode === 'default' ? (
+                  <Bar
+                    data={{
+                      labels: lineRangeData.labels,
+                      datasets: lineRangeData.datasets.map((dataset, index) => {
+                        if (dataset.label === 'Balance') {
+                          // Convert balance to line dataset
+                          return {
+                            ...dataset,
+                            type: 'line',
+                            borderWidth: 3,
+                            borderDash: [8, 4],
+                            fill: false,
+                            pointRadius: 2,
+                            pointHoverRadius: 4,
+                            tension: 0.4,
+                            yAxisID: 'y',
+                          };
+                        }
+                        // Keep income and expenses as bars
+                        return {
+                          ...dataset,
+                          type: 'bar',
+                          yAxisID: 'y',
+                        };
+                      })
+                    }}
+                    options={{
+                      ...lineRangeOptions,
+                      animation: {
+                        duration: 1800,
+                        easing: 'easeInOutQuart',
                       },
-                      point: {
-                        radius: 5,
-                        backgroundColor: ctx => ctx.datasetIndex === 0 ? '#00f2fe' : ctx.datasetIndex === 1 ? '#ff6b6b' : '#4facfe',
-                        borderWidth: 1,
-                        hoverRadius: 8,
-                        hoverBackgroundColor: ctx => ctx.datasetIndex === 0 ? '#00f2fe' : ctx.datasetIndex === 1 ? '#ff6b6b' : '#4facfe',
-                        shadowBlur: 16,
-                        shadowColor: ctx => ctx.datasetIndex === 0 ? '#00f2fe' : ctx.datasetIndex === 1 ? '#ff6b6b' : '#4facfe',
+                      elements: {
+                        bar: {
+                          borderRadius: 8,
+                          borderSkipped: false,
+                          borderWidth: 1,
+                          borderColor: ctx => {
+                            const colors = ['#00f2fe', '#ff6b6b', '#4facfe'];
+                            return colors[ctx.datasetIndex % colors.length];
+                          },
+                        },
+                        line: {
+                          borderWidth: 3,
+                          borderDash: [8, 4],
+                        },
+                        point: {
+                          radius: 6,
+                          hoverRadius: 8,
+                          backgroundColor: '#4facfe',
+                          borderColor: '#ffffff',
+                          borderWidth: 2,
+                        },
                       },
-                    },
-                    plugins: {
-                      legend: lineRangeOptions.plugins.legend,
-                      tooltip: lineRangeOptions.plugins.tooltip,
-                      datalabels: {
-                        display: false,
+                      plugins: {
+                        legend: lineRangeOptions.plugins.legend,
+                        tooltip: lineRangeOptions.plugins.tooltip,
+                        datalabels: {
+                          display: false,
+                        },
                       },
-                    },
-                  }}
-                  plugins={[verticalLinePlugin]}
-                />
+                    }}
+                    plugins={[barHoverPlugin]}
+                  />
+                ) : (
+                  <Line
+                    data={lineRangeData}
+                    options={{
+                      ...lineRangeOptions,
+                      animation: {
+                        duration: 1800,
+                        easing: 'easeInOutQuart',
+                      },
+                      elements: {
+                        line: {
+                          borderWidth: 3,
+                          cubicInterpolationMode: 'monotone',
+                          borderColor: ctx => ctx.datasetIndex === 2 ? '#4facfe' : undefined,
+                          backgroundColor: 'transparent',
+                          shadowBlur: 10,
+                          shadowColor: ctx => ctx.datasetIndex === 0 ? '#00f2fe' : ctx.datasetIndex === 1 ? '#ff6b6b' : '#4facfe',
+                        },
+                        point: {
+                          radius: 5,
+                          backgroundColor: ctx => ctx.datasetIndex === 0 ? '#00f2fe' : ctx.datasetIndex === 1 ? '#ff6b6b' : '#4facfe',
+                          borderWidth: 1,
+                          hoverRadius: 4,
+                          hoverBackgroundColor: ctx => ctx.datasetIndex === 0 ? '#00f2fe' : ctx.datasetIndex === 1 ? '#ff6b6b' : '#4facfe',
+                          shadowBlur: 16,
+                          shadowColor: ctx => ctx.datasetIndex === 0 ? '#00f2fe' : ctx.datasetIndex === 1 ? '#ff6b6b' : '#4facfe',
+                        },
+                      },
+                      plugins: {
+                        legend: lineRangeOptions.plugins.legend,
+                        tooltip: lineRangeOptions.plugins.tooltip,
+                        datalabels: {
+                          display: false,
+                        },
+                      },
+                    }}
+                    plugins={[verticalLinePlugin]}
+                  />
+                )}
               </Box>
             </Paper>
           </Grid>
