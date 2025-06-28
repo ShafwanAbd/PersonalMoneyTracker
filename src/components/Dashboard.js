@@ -438,7 +438,7 @@ function Dashboard() {
         }
       },
       datalabels: {
-        color: '#ffffff',
+        color: theme.palette.mode === 'light' ? '#ffffff' : '#1a1a1a',
         font: {
           weight: 'bold',
           size: 12,
@@ -508,7 +508,7 @@ function Dashboard() {
         }
       },
       datalabels: {
-        color: '#ffffff',
+        color: theme.palette.mode === 'light' ? '#ffffff' : '#1a1a1a',
         font: {
           weight: 'bold',
           size: 12,
