@@ -13,6 +13,7 @@ import {
   LineElement,
   Title,
 } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import axios from 'axios';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
@@ -27,7 +28,8 @@ ChartJS.register(
   BarElement,
   PointElement,
   LineElement,
-  Title
+  Title,
+  ChartDataLabels
 );
 
 // Format number to Indonesian currency format
@@ -228,6 +230,107 @@ function Dashboard() {
     })(),
   };
 
+  // Custom external tooltip handler
+  function customLineTooltip(context) {
+    // Tooltip Element
+    let tooltipEl = document.getElementById('custom-line-tooltip');
+    if (!tooltipEl) {
+      tooltipEl = document.createElement('div');
+      tooltipEl.id = 'custom-line-tooltip';
+      tooltipEl.style.background = 'rgba(20, 30, 40, 0.97)';
+      tooltipEl.style.borderRadius = '8px';
+      tooltipEl.style.color = '#fff';
+      tooltipEl.style.boxShadow = '0 2px 12px rgba(0,0,0,0.15)';
+      tooltipEl.style.pointerEvents = 'none';
+      tooltipEl.style.position = 'absolute';
+      tooltipEl.style.transition = 'all .1s ease';
+      tooltipEl.style.zIndex = 1000;
+      tooltipEl.style.padding = '10px 16px';
+      tooltipEl.style.fontSize = '14px';
+      document.body.appendChild(tooltipEl);
+    }
+
+    // Hide if no tooltip
+    const tooltipModel = context.tooltip;
+    if (!tooltipModel || tooltipModel.opacity === 0) {
+      tooltipEl.style.opacity = 0;
+      return;
+    }
+
+    // Title
+    let html = '';
+    if (tooltipModel.title && tooltipModel.title.length) {
+      html += `<div style="font-weight:600;font-size:15px;margin-bottom:6px;">${tooltipModel.title[0]}</div>`;
+    }
+
+    // Sort items by value (biggest to smallest)
+    const items = tooltipModel.dataPoints ? [...tooltipModel.dataPoints] : [];
+    items.sort((a, b) => b.parsed.y - a.parsed.y);
+
+    // List items with colored box
+    html += items.map(item => {
+      const color = item.dataset.borderColor || item.dataset.backgroundColor;
+      return `<div style="display:flex;align-items:center;margin-bottom:2px;">
+        <span style="display:inline-block;width:12px;height:12px;background:${color};border-radius:2px;margin-right:8px;"></span>
+        <span>${item.dataset.label}: ${formatCurrency(item.parsed.y)}</span>
+      </div>`;
+    }).join('');
+
+    tooltipEl.innerHTML = html;
+
+    // Smart positioning (relative to page)
+    const {caretX, caretY, chart} = tooltipModel;
+    const chartRect = chart.canvas.getBoundingClientRect();
+    const tooltipRect = tooltipEl.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    let left = chartRect.left + caretX + 16;
+    let top;
+    // Prefer below, but if not enough space, show above
+    if (chartRect.top + caretY + tooltipRect.height + 24 < windowHeight) {
+      top = chartRect.top + caretY + 16;
+    } else {
+      top = chartRect.top + caretY - tooltipRect.height - 16;
+      if (top < 0) top = 8;
+    }
+    // If overflow right, show to the left of the mouse
+    if (left + tooltipRect.width > windowWidth - 8) {
+      left = chartRect.left + caretX - tooltipRect.width - 16;
+      if (left < 8) left = 8;
+    }
+    // Prevent overflow left
+    if (left < 8) left = 8;
+    tooltipEl.style.left = left + 'px';
+    tooltipEl.style.top = top + 'px';
+    tooltipEl.style.opacity = 1;
+  }
+
+  // Custom plugin for vertical line on hover
+  const verticalLinePlugin = {
+    id: 'verticalLine',
+    afterDraw: (chart) => {
+      if (chart.tooltip?._active && chart.tooltip._active.length) {
+        const ctx = chart.ctx;
+        ctx.save();
+        const activePoint = chart.tooltip._active[0];
+        const x = activePoint.element.x;
+        const topY = chart.scales.y.top;
+        const bottomY = chart.scales.y.bottom;
+        ctx.beginPath();
+        ctx.moveTo(x, topY);
+        ctx.lineTo(x, bottomY);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#fff';
+        ctx.setLineDash([4, 4]);
+        ctx.globalAlpha = 0.7;
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+    }
+  };
+
   const lineRangeOptions = {
     responsive: true,
     plugins: {
@@ -239,12 +342,13 @@ function Dashboard() {
         },
       },
       tooltip: {
-        callbacks: {
-          label: function(context) {
-            return `${context.dataset.label}: ${formatCurrency(context.parsed.y)}`;
-          }
-        }
+        enabled: false, // Disable the default tooltip
+        external: customLineTooltip
       }
+    },
+    interaction: {
+      mode: 'index',
+      intersect: false,
     },
     scales: {
       x: {
@@ -283,6 +387,22 @@ function Dashboard() {
             return `${label}: ${formatCurrency(value)} (${percentage}%)`;
           }
         }
+      },
+      datalabels: {
+        color: '#ffffff',
+        font: {
+          weight: 'bold',
+          size: 12,
+          family: theme.typography.fontFamily,
+        },
+        formatter: function(value, context) {
+          const dataset = context.dataset;
+          const total = dataset.data.reduce((a, b) => a + b, 0);
+          const percentage = ((value / total) * 100).toFixed(1);
+          return percentage + '%';
+        },
+        textAlign: 'center',
+        textBaseline: 'middle',
       }
     },
     cutout: '70%',
@@ -768,8 +888,12 @@ function Dashboard() {
                     plugins: {
                       legend: lineRangeOptions.plugins.legend,
                       tooltip: lineRangeOptions.plugins.tooltip,
+                      datalabels: {
+                        display: false,
+                      },
                     },
                   }}
+                  plugins={[verticalLinePlugin]}
                 />
               </Box>
             </Paper>
