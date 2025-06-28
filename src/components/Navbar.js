@@ -1,51 +1,38 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton, useTheme } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import { ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { Link } from 'react-router-dom';
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import SettingsIcon from '@mui/icons-material/Settings';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 
-function Navbar() {
+function Navbar({ mode, toggleTheme }) {
+  const theme = useTheme();
+
   return (
     <AppBar 
-      position="static" 
-      elevation={0}
-      sx={{
-        background: 'rgba(19, 47, 76, 0.8)',
-        backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+      position="fixed" 
+      sx={{ 
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        height: '64px',
+        display: 'flex',
+        justifyContent: 'center'
       }}
     >
       <Toolbar>
-        <AccountBalanceWalletIcon 
-          sx={{ 
-            mr: 2,
-            color: '#00f2fe',
-            fontSize: 32,
-          }} 
-        />
-        <Typography 
-          variant="h6" 
-          component="div" 
-          sx={{ 
-            flexGrow: 1,
-            background: 'linear-gradient(90deg, #00f2fe 0%, #4facfe 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontWeight: 600,
-          }}
-        >
-          Wallet-In
+        <AccountBalanceWalletIcon sx={{ mr: 2 }} />
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          Inside Wallet
         </Typography>
-        <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Button
             color="inherit"
             component={RouterLink}
             to="/"
-            sx={{
-              mx: 1,
-              '&:hover': {
-                background: 'rgba(0, 242, 254, 0.1)',
-              },
-            }}
+            startIcon={<AccountBalanceWalletIcon />}
           >
             Dashboard
           </Button>
@@ -53,15 +40,31 @@ function Navbar() {
             color="inherit"
             component={RouterLink}
             to="/transactions"
-            sx={{
-              mx: 1,
-              '&:hover': {
-                background: 'rgba(79, 172, 254, 0.1)',
-              },
-            }}
+            startIcon={<ReceiptIcon />}
           >
             Transactions
           </Button>
+          <Button
+            color="inherit"
+            component={RouterLink}
+            to="/settings"
+            startIcon={<SettingsIcon />}
+          >
+            Settings
+          </Button>
+          <IconButton 
+            onClick={toggleTheme} 
+            color="inherit"
+            sx={{
+              ml: 2,
+              transition: 'transform 0.3s ease-in-out',
+              '&:hover': {
+                transform: 'rotate(30deg)',
+              },
+            }}
+          >
+            {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+          </IconButton>
         </Box>
       </Toolbar>
     </AppBar>

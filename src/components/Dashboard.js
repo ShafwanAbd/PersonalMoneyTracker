@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Grid, Paper, Typography, Box, useTheme } from '@mui/material';
+import { Grid, Paper, Typography, Box, useTheme, Button } from '@mui/material';
 import { Doughnut, Bar, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -82,6 +82,7 @@ function Dashboard() {
   const [viewType, setViewType] = useState('simple');
   const [valueMode, setValueMode] = useState('default');
   const [rangeData, setRangeData] = useState([]);
+  const [isExporting, setIsExporting] = useState(false);
   const rangeOptions = [
     { value: '7d', label: '7 Days' },
     { value: '30d', label: '30 Days' },
@@ -427,10 +428,18 @@ function Dashboard() {
                   display: 'flex',
                   flexDirection: 'column',
                   width: '100%',
-                  background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.1) 0%, rgba(0, 242, 254, 0.05) 100%)',
+                  background: theme.palette.mode === 'light' 
+                    ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                    : 'linear-gradient(135deg, rgba(0, 242, 254, 0.1) 0%, rgba(0, 242, 254, 0.05) 100%)',
                   color: theme.palette.text.primary,
                   borderRadius: 2,
                   transition: 'all 0.3s ease',
+                  border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+                  '&:hover': {
+                    boxShadow: theme.palette.mode === 'light'
+                      ? '0 8px 32px rgba(79, 172, 254, 0.15)'
+                      : '0 8px 32px rgba(0, 242, 254, 0.18)',
+                  },
                 }}
               >
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00f2fe' }}>
@@ -450,10 +459,18 @@ function Dashboard() {
                   p: 3,
                   display: 'flex',
                   flexDirection: 'column',
-                  background: 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
+                  background: theme.palette.mode === 'light' 
+                    ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                    : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
                   color: theme.palette.text.primary,
                   borderRadius: 2,
                   transition: 'all 0.3s ease',
+                  border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+                  '&:hover': {
+                    boxShadow: theme.palette.mode === 'light'
+                      ? '0 8px 32px rgba(79, 172, 254, 0.15)'
+                      : '0 8px 32px rgba(79, 172, 254, 0.18)',
+                  },
                 }}
               >
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#4facfe' }}>
@@ -473,10 +490,18 @@ function Dashboard() {
                   p: 3,
                   display: 'flex',
                   flexDirection: 'column',
-                  background: 'linear-gradient(135deg, rgba(0, 255, 157, 0.1) 0%, rgba(0, 255, 157, 0.05) 100%)',
+                  background: theme.palette.mode === 'light' 
+                    ? 'linear-gradient(135deg, rgba(0, 255, 157, 0.05) 0%, rgba(0, 255, 157, 0.02) 100%)'
+                    : 'linear-gradient(135deg, rgba(0, 255, 157, 0.1) 0%, rgba(0, 255, 157, 0.05) 100%)',
                   color: theme.palette.text.primary,
                   borderRadius: 2,
                   transition: 'all 0.3s ease',
+                  border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+                  '&:hover': {
+                    boxShadow: theme.palette.mode === 'light'
+                      ? '0 8px 32px rgba(79, 172, 254, 0.15)'
+                      : '0 8px 32px rgba(0, 255, 157, 0.18)',
+                  },
                 }}
               >
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00ff9d' }}>
@@ -502,8 +527,14 @@ function Dashboard() {
                 width: '100%',
                 borderRadius: 2,
                 transition: 'all 0.3s ease',
+                background: theme.palette.mode === 'light' 
+                  ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                  : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
+                border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
                 '&:hover': {
-                  boxShadow: '0 8px 32px rgba(79, 172, 254, 0.1)',
+                  boxShadow: theme.palette.mode === 'light'
+                    ? '0 8px 32px rgba(79, 172, 254, 0.15)'
+                    : '0 8px 32px rgba(79, 172, 254, 0.1)',
                 },
                 m: 0,
                 mb: 3,
@@ -518,7 +549,60 @@ function Dashboard() {
                   value={viewType}
                   onChange={e => setViewType(e.target.value)}
                   size="small"
-                  sx={{ minWidth: 120, background: 'rgba(10,25,41,0.7)', borderRadius: 2, ml: 2 }}
+                  sx={{ 
+                    minWidth: 120, 
+                    mx: 1,
+                    background: theme.palette.mode === 'light' 
+                      ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                      : 'rgba(10,25,41,0.7)',
+                    borderRadius: 2,
+                    border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.3)' : 'rgba(255, 255, 255, 0.2)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.5)' : 'rgba(255, 255, 255, 0.3)',
+                      },
+                    },
+                    '& .MuiSelect-select': {
+                      color: theme.palette.text.primary,
+                    },
+                  }}
+                  SelectProps={{
+                    MenuProps: {
+                      PaperProps: {
+                        sx: {
+                          background: theme.palette.mode === 'light' 
+                            ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                            : 'rgba(10,25,41,0.95)',
+                          backdropFilter: 'blur(10px)',
+                          border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : '1px solid rgba(255, 255, 255, 0.1)',
+                          '& .MuiMenuItem-root': {
+                            color: theme.palette.text.primary,
+                            '&:hover': {
+                              background: theme.palette.mode === 'light' 
+                                ? 'rgba(79, 172, 254, 0.1)'
+                                : 'rgba(255, 255, 255, 0.1)',
+                            },
+                            '&.Mui-selected': {
+                              background: theme.palette.mode === 'light' 
+                                ? 'rgba(79, 172, 254, 0.15)'
+                                : 'rgba(255, 255, 255, 0.15)',
+                              '&:hover': {
+                                background: theme.palette.mode === 'light' 
+                                  ? 'rgba(79, 172, 254, 0.2)'
+                                  : 'rgba(255, 255, 255, 0.2)',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  }}
                 >
                   {viewTypeOptions.map(opt => (
                     <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
@@ -529,7 +613,60 @@ function Dashboard() {
                   value={valueMode}
                   onChange={e => setValueMode(e.target.value)}
                   size="small"
-                  sx={{ minWidth: 120, background: 'rgba(10,25,41,0.7)', borderRadius: 2, ml: 2 }}
+                  sx={{ 
+                    minWidth: 120, 
+                    mx: 1,
+                    background: theme.palette.mode === 'light' 
+                      ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                      : 'rgba(10,25,41,0.7)',
+                    borderRadius: 2,
+                    border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.3)' : 'rgba(255, 255, 255, 0.2)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.5)' : 'rgba(255, 255, 255, 0.3)',
+                      },
+                    },
+                    '& .MuiSelect-select': {
+                      color: theme.palette.text.primary,
+                    },
+                  }}
+                  SelectProps={{
+                    MenuProps: {
+                      PaperProps: {
+                        sx: {
+                          background: theme.palette.mode === 'light' 
+                            ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                            : 'rgba(10,25,41,0.95)',
+                          backdropFilter: 'blur(10px)',
+                          border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : '1px solid rgba(255, 255, 255, 0.1)',
+                          '& .MuiMenuItem-root': {
+                            color: theme.palette.text.primary,
+                            '&:hover': {
+                              background: theme.palette.mode === 'light' 
+                                ? 'rgba(79, 172, 254, 0.1)'
+                                : 'rgba(255, 255, 255, 0.1)',
+                            },
+                            '&.Mui-selected': {
+                              background: theme.palette.mode === 'light' 
+                                ? 'rgba(79, 172, 254, 0.15)'
+                                : 'rgba(255, 255, 255, 0.15)',
+                              '&:hover': {
+                                background: theme.palette.mode === 'light' 
+                                  ? 'rgba(79, 172, 254, 0.2)'
+                                  : 'rgba(255, 255, 255, 0.2)',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  }}
                 >
                   {valueModeOptions.map(opt => (
                     <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
@@ -540,7 +677,60 @@ function Dashboard() {
                   value={range}
                   onChange={e => setRange(e.target.value)}
                   size="small"
-                  sx={{ minWidth: 160, background: 'rgba(10,25,41,0.7)', borderRadius: 2, ml: 2 }}
+                  sx={{ 
+                    minWidth: 160, 
+                    mx: 1,
+                    background: theme.palette.mode === 'light' 
+                      ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                      : 'rgba(10,25,41,0.7)',
+                    borderRadius: 2,
+                    border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.3)' : 'rgba(255, 255, 255, 0.2)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.5)' : 'rgba(255, 255, 255, 0.3)',
+                      },
+                    },
+                    '& .MuiSelect-select': {
+                      color: theme.palette.text.primary,
+                    },
+                  }}
+                  SelectProps={{
+                    MenuProps: {
+                      PaperProps: {
+                        sx: {
+                          background: theme.palette.mode === 'light' 
+                            ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                            : 'rgba(10,25,41,0.95)',
+                          backdropFilter: 'blur(10px)',
+                          border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : '1px solid rgba(255, 255, 255, 0.1)',
+                          '& .MuiMenuItem-root': {
+                            color: theme.palette.text.primary,
+                            '&:hover': {
+                              background: theme.palette.mode === 'light' 
+                                ? 'rgba(79, 172, 254, 0.1)'
+                                : 'rgba(255, 255, 255, 0.1)',
+                            },
+                            '&.Mui-selected': {
+                              background: theme.palette.mode === 'light' 
+                                ? 'rgba(79, 172, 254, 0.15)'
+                                : 'rgba(255, 255, 255, 0.15)',
+                              '&:hover': {
+                                background: theme.palette.mode === 'light' 
+                                  ? 'rgba(79, 172, 254, 0.2)'
+                                  : 'rgba(255, 255, 255, 0.2)',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  }}
                 >
                   {rangeOptions.map(opt => (
                     <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
@@ -591,18 +781,32 @@ function Dashboard() {
             <Paper
               elevation={0}
               sx={{
-                p: 3,
+                p: 2.5,
                 display: 'flex',
                 flexDirection: 'column',
                 height: 400,
                 borderRadius: 2,
                 transition: 'all 0.3s ease',
+                background: theme.palette.mode === 'light' 
+                  ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                  : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
+                border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
                 '&:hover': {
-                  boxShadow: '0 8px 32px rgba(79, 172, 254, 0.1)',
+                  boxShadow: theme.palette.mode === 'light'
+                    ? '0 8px 32px rgba(79, 172, 254, 0.15)'
+                    : '0 8px 32px rgba(79, 172, 254, 0.1)',
                 },
               }}
             >
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#4facfe', mb: 2 }}>
+              <Typography 
+                variant="h6" 
+                gutterBottom 
+                sx={{ 
+                  fontWeight: 500, 
+                  color: theme.palette.mode === 'light' ? '#4facfe' : '#4facfe',
+                  mb: 2 
+                }}
+              >
                 Income by Category
               </Typography>
               <Box sx={{ flex: 1, position: 'relative' }}>
@@ -614,18 +818,32 @@ function Dashboard() {
             <Paper
               elevation={0}
               sx={{
-                p: 3,
+                p: 2.5,
                 display: 'flex',
                 flexDirection: 'column',
                 height: 400,
                 borderRadius: 2,
                 transition: 'all 0.3s ease',
+                background: theme.palette.mode === 'light' 
+                  ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                  : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
+                border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
                 '&:hover': {
-                  boxShadow: '0 8px 32px rgba(0, 255, 157, 0.1)',
+                  boxShadow: theme.palette.mode === 'light'
+                    ? '0 8px 32px rgba(79, 172, 254, 0.15)'
+                    : '0 8px 32px rgba(79, 172, 254, 0.1)',
                 },
               }}
             >
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#4facfe', mb: 2 }}>
+              <Typography 
+                variant="h6" 
+                gutterBottom 
+                sx={{ 
+                  fontWeight: 500, 
+                  color: theme.palette.mode === 'light' ? '#4facfe' : '#4facfe',
+                  mb: 2 
+                }}
+              >
                 Expenses by Category
               </Typography>
               <Box sx={{ flex: 1, position: 'relative' }}>
@@ -637,18 +855,32 @@ function Dashboard() {
             <Paper
               elevation={0}
               sx={{
-                p: 3,
+                p: 2.5,
                 display: 'flex',
                 flexDirection: 'column',
                 height: 400,
                 borderRadius: 2,
                 transition: 'all 0.3s ease',
+                background: theme.palette.mode === 'light' 
+                  ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                  : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
+                border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
                 '&:hover': {
-                  boxShadow: '0 8px 32px rgba(0, 255, 157, 0.1)',
+                  boxShadow: theme.palette.mode === 'light'
+                    ? '0 8px 32px rgba(79, 172, 254, 0.15)'
+                    : '0 8px 32px rgba(79, 172, 254, 0.1)',
                 },
               }}
             >
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#4facfe', mb: 2 }}>
+              <Typography 
+                variant="h6" 
+                gutterBottom 
+                sx={{ 
+                  fontWeight: 500, 
+                  color: theme.palette.mode === 'light' ? '#4facfe' : '#4facfe',
+                  mb: 2 
+                }}
+              >
                 Income vs Expenses Overview
               </Typography>
               <Box sx={{ flex: 1, position: 'relative' }}>
@@ -659,23 +891,14 @@ function Dashboard() {
                       {
                         data: [summary.totalIncome, summary.totalExpenses],
                         backgroundColor: [
-                          '#00f2fe',
-                          '#ff6b6b',
+                          theme.palette.mode === 'light' ? '#4facfe' : '#00f2fe',
+                          theme.palette.mode === 'light' ? '#00f2fe' : '#ff6b6b',
                         ],
                         borderWidth: 0,
                       },
                     ],
                   }}
-                  options={{
-                    ...doughnutOptions,
-                    plugins: {
-                      ...doughnutOptions.plugins,
-                      legend: {
-                        ...doughnutOptions.plugins.legend,
-                        position: 'bottom',
-                      },
-                    },
-                  }}
+                  options={doughnutOptions}
                 />
               </Box>
             </Paper>
