@@ -408,6 +408,76 @@ function Dashboard() {
     cutout: '70%',
   };
 
+  const incomeVsExpensesData = {
+    labels: ['Income', 'Expenses'],
+    datasets: [
+      {
+        data: [Math.abs(summary.totalIncome), Math.abs(summary.totalExpenses)],
+        backgroundColor: [
+          theme.palette.mode === 'light' ? '#4facfe' : '#00f2fe',
+          theme.palette.mode === 'light' ? '#00f2fe' : '#ff6b6b',
+        ],
+        borderWidth: 0,
+      },
+    ],
+  };
+
+  // Debug logging
+  console.log('Income vs Expenses Data:', {
+    income: Math.abs(summary.totalIncome),
+    expenses: Math.abs(summary.totalExpenses),
+    total: Math.abs(summary.totalIncome) + Math.abs(summary.totalExpenses),
+    incomePercent: ((Math.abs(summary.totalIncome) / (Math.abs(summary.totalIncome) + Math.abs(summary.totalExpenses))) * 100).toFixed(1),
+    expensesPercent: ((Math.abs(summary.totalExpenses) / (Math.abs(summary.totalIncome) + Math.abs(summary.totalExpenses))) * 100).toFixed(1)
+  });
+
+  // Special options for Income vs Expenses Overview to ensure 100% total
+  const incomeVsExpensesOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: theme.palette.text.primary,
+          font: {
+            size: 12,
+            family: theme.typography.fontFamily,
+          },
+          padding: 20,
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = ((value / total) * 100).toFixed(1);
+            return `${label}: ${formatCurrency(value)} (${percentage}%)`;
+          }
+        }
+      },
+      datalabels: {
+        color: '#ffffff',
+        font: {
+          weight: 'bold',
+          size: 12,
+          family: theme.typography.fontFamily,
+        },
+        formatter: function(value, context) {
+          const dataset = context.dataset;
+          const total = dataset.data.reduce((a, b) => a + b, 0);
+          const percentage = ((value / total) * 100).toFixed(1);
+          return percentage + '%';
+        },
+        textAlign: 'center',
+        textBaseline: 'middle',
+      }
+    },
+    cutout: '70%',
+  };
+
   const incomeDoughnutData = {
     labels: summary.categoryIncome.map(item => item._id),
     datasets: [
@@ -1009,20 +1079,8 @@ function Dashboard() {
               </Typography>
               <Box sx={{ flex: 1, position: 'relative' }}>
                 <Doughnut
-                  data={{
-                    labels: ['Income', 'Expenses'],
-                    datasets: [
-                      {
-                        data: [summary.totalIncome, summary.totalExpenses],
-                        backgroundColor: [
-                          theme.palette.mode === 'light' ? '#4facfe' : '#00f2fe',
-                          theme.palette.mode === 'light' ? '#00f2fe' : '#ff6b6b',
-                        ],
-                        borderWidth: 0,
-                      },
-                    ],
-                  }}
-                  options={doughnutOptions}
+                  data={incomeVsExpensesData}
+                  options={incomeVsExpensesOptions}
                 />
               </Box>
             </Paper>
