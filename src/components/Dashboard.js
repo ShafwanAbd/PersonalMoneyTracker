@@ -411,6 +411,234 @@ function Dashboard() {
     },
   };
 
+  // Custom tooltip for Income by Category
+  const incomeTooltip = function(context) {
+    // Remove any existing doughnut tooltips first
+    const existingTooltips = document.querySelectorAll('[id^="doughnut-tooltip"]');
+    existingTooltips.forEach(el => el.remove());
+    
+    let tooltipEl = document.getElementById('doughnut-tooltip-income');
+    if (!tooltipEl) {
+      tooltipEl = document.createElement('div');
+      tooltipEl.id = 'doughnut-tooltip-income';
+      tooltipEl.style.background = 'rgba(20, 30, 40, 0.97)';
+      tooltipEl.style.borderRadius = '8px';
+      tooltipEl.style.color = '#fff';
+      tooltipEl.style.boxShadow = '0 2px 12px rgba(0,0,0,0.15)';
+      tooltipEl.style.pointerEvents = 'none';
+      tooltipEl.style.position = 'fixed';
+      tooltipEl.style.transition = 'all .1s ease';
+      tooltipEl.style.zIndex = 9999;
+      tooltipEl.style.padding = '10px 16px';
+      tooltipEl.style.fontSize = '14px';
+      document.body.appendChild(tooltipEl);
+    }
+
+    const tooltipModel = context.tooltip;
+    if (!tooltipModel || tooltipModel.opacity === 0) {
+      tooltipEl.style.opacity = 0;
+      return;
+    }
+
+    const chart = context.chart;
+    const dataset = chart.data.datasets[0];
+    const labels = chart.data.labels;
+    const data = dataset.data;
+    
+    const allData = labels.map((label, index) => ({
+      label: label,
+      value: data[index],
+      color: dataset.backgroundColor[index] || dataset.borderColor[index]
+    })).sort((a, b) => b.value - a.value);
+
+    const total = data.reduce((a, b) => a + b, 0);
+
+    let html = '<div style="font-weight:600;font-size:15px;margin-bottom:8px;">All Income Categories</div>';
+    
+    html += allData.map(item => {
+      const percentage = ((item.value / total) * 100).toFixed(1);
+      return `<div style="display:flex;align-items:center;margin-bottom:4px;">
+        <span style="display:inline-block;width:12px;height:12px;background:${item.color};border-radius:2px;margin-right:8px;"></span>
+        <span>${item.label}: ${formatCurrency(item.value)} (${percentage}%)</span>
+      </div>`;
+    }).join('');
+
+    tooltipEl.innerHTML = html;
+
+    // Position relative to the specific chart
+    const chartRect = chart.canvas.getBoundingClientRect();
+    const tooltipRect = tooltipEl.getBoundingClientRect();
+    
+    // Position above the chart
+    let left = chartRect.left + (chartRect.width / 2) - (tooltipRect.width / 2);
+    let top = chartRect.top - tooltipRect.height - 10;
+    
+    // Adjust if overflow
+    if (left < 10) left = 10;
+    if (left + tooltipRect.width > window.innerWidth - 10) {
+      left = window.innerWidth - tooltipRect.width - 10;
+    }
+    if (top < 10) {
+      top = chartRect.bottom + 10; // Show below if no space above
+    }
+    
+    tooltipEl.style.left = left + 'px';
+    tooltipEl.style.top = top + 'px';
+    tooltipEl.style.opacity = 1;
+  };
+
+  // Custom tooltip for Expenses by Category
+  const expenseTooltip = function(context) {
+    // Remove any existing doughnut tooltips first
+    const existingTooltips = document.querySelectorAll('[id^="doughnut-tooltip"]');
+    existingTooltips.forEach(el => el.remove());
+    
+    let tooltipEl = document.getElementById('doughnut-tooltip-expense');
+    if (!tooltipEl) {
+      tooltipEl = document.createElement('div');
+      tooltipEl.id = 'doughnut-tooltip-expense';
+      tooltipEl.style.background = 'rgba(20, 30, 40, 0.97)';
+      tooltipEl.style.borderRadius = '8px';
+      tooltipEl.style.color = '#fff';
+      tooltipEl.style.boxShadow = '0 2px 12px rgba(0,0,0,0.15)';
+      tooltipEl.style.pointerEvents = 'none';
+      tooltipEl.style.position = 'fixed';
+      tooltipEl.style.transition = 'all .1s ease';
+      tooltipEl.style.zIndex = 9999;
+      tooltipEl.style.padding = '10px 16px';
+      tooltipEl.style.fontSize = '14px';
+      document.body.appendChild(tooltipEl);
+    }
+
+    const tooltipModel = context.tooltip;
+    if (!tooltipModel || tooltipModel.opacity === 0) {
+      tooltipEl.style.opacity = 0;
+      return;
+    }
+
+    const chart = context.chart;
+    const dataset = chart.data.datasets[0];
+    const labels = chart.data.labels;
+    const data = dataset.data;
+    
+    const allData = labels.map((label, index) => ({
+      label: label,
+      value: data[index],
+      color: dataset.backgroundColor[index] || dataset.borderColor[index]
+    })).sort((a, b) => b.value - a.value);
+
+    const total = data.reduce((a, b) => a + b, 0);
+
+    let html = '<div style="font-weight:600;font-size:15px;margin-bottom:8px;">All Expense Categories</div>';
+    
+    html += allData.map(item => {
+      const percentage = ((item.value / total) * 100).toFixed(1);
+      return `<div style="display:flex;align-items:center;margin-bottom:4px;">
+        <span style="display:inline-block;width:12px;height:12px;background:${item.color};border-radius:2px;margin-right:8px;"></span>
+        <span>${item.label}: ${formatCurrency(item.value)} (${percentage}%)</span>
+      </div>`;
+    }).join('');
+
+    tooltipEl.innerHTML = html;
+
+    // Position relative to the specific chart
+    const chartRect = chart.canvas.getBoundingClientRect();
+    const tooltipRect = tooltipEl.getBoundingClientRect();
+    
+    // Position above the chart
+    let left = chartRect.left + (chartRect.width / 2) - (tooltipRect.width / 2);
+    let top = chartRect.top - tooltipRect.height - 10;
+    
+    // Adjust if overflow
+    if (left < 10) left = 10;
+    if (left + tooltipRect.width > window.innerWidth - 10) {
+      left = window.innerWidth - tooltipRect.width - 10;
+    }
+    if (top < 10) {
+      top = chartRect.bottom + 10; // Show below if no space above
+    }
+    
+    tooltipEl.style.left = left + 'px';
+    tooltipEl.style.top = top + 'px';
+    tooltipEl.style.opacity = 1;
+  };
+
+  // Custom tooltip for Income vs Expenses Overview
+  const overviewTooltip = function(context) {
+    // Remove any existing doughnut tooltips first
+    const existingTooltips = document.querySelectorAll('[id^="doughnut-tooltip"]');
+    existingTooltips.forEach(el => el.remove());
+    
+    let tooltipEl = document.getElementById('doughnut-tooltip-overview');
+    if (!tooltipEl) {
+      tooltipEl = document.createElement('div');
+      tooltipEl.id = 'doughnut-tooltip-overview';
+      tooltipEl.style.background = 'rgba(20, 30, 40, 0.97)';
+      tooltipEl.style.borderRadius = '8px';
+      tooltipEl.style.color = '#fff';
+      tooltipEl.style.boxShadow = '0 2px 12px rgba(0,0,0,0.15)';
+      tooltipEl.style.pointerEvents = 'none';
+      tooltipEl.style.position = 'fixed';
+      tooltipEl.style.transition = 'all .1s ease';
+      tooltipEl.style.zIndex = 9999;
+      tooltipEl.style.padding = '10px 16px';
+      tooltipEl.style.fontSize = '14px';
+      document.body.appendChild(tooltipEl);
+    }
+
+    const tooltipModel = context.tooltip;
+    if (!tooltipModel || tooltipModel.opacity === 0) {
+      tooltipEl.style.opacity = 0;
+      return;
+    }
+
+    const chart = context.chart;
+    const dataset = chart.data.datasets[0];
+    const labels = chart.data.labels;
+    const data = dataset.data;
+    
+    const allData = labels.map((label, index) => ({
+      label: label,
+      value: data[index],
+      color: dataset.backgroundColor[index] || dataset.borderColor[index]
+    })).sort((a, b) => b.value - a.value);
+
+    const total = data.reduce((a, b) => a + b, 0);
+
+    let html = '<div style="font-weight:600;font-size:15px;margin-bottom:8px;">Income vs Expenses</div>';
+    
+    html += allData.map(item => {
+      const percentage = ((item.value / total) * 100).toFixed(1);
+      return `<div style="display:flex;align-items:center;margin-bottom:4px;">
+        <span style="display:inline-block;width:12px;height:12px;background:${item.color};border-radius:2px;margin-right:8px;"></span>
+        <span>${item.label}: ${formatCurrency(item.value)} (${percentage}%)</span>
+      </div>`;
+    }).join('');
+
+    tooltipEl.innerHTML = html;
+
+    // Position relative to the specific chart
+    const chartRect = chart.canvas.getBoundingClientRect();
+    const tooltipRect = tooltipEl.getBoundingClientRect();
+    
+    // Position above the chart
+    let left = chartRect.left + (chartRect.width / 2) - (tooltipRect.width / 2);
+    let top = chartRect.top - tooltipRect.height - 10;
+    
+    // Adjust if overflow
+    if (left < 10) left = 10;
+    if (left + tooltipRect.width > window.innerWidth - 10) {
+      left = window.innerWidth - tooltipRect.width - 10;
+    }
+    if (top < 10) {
+      top = chartRect.bottom + 10; // Show below if no space above
+    }
+    
+    tooltipEl.style.left = left + 'px';
+    tooltipEl.style.top = top + 'px';
+    tooltipEl.style.opacity = 1;
+  };
+
   const doughnutOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -425,17 +653,6 @@ function Dashboard() {
           },
           padding: 20,
         },
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            const label = context.label || '';
-            const value = context.raw || 0;
-            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-            const percentage = ((value / total) * 100).toFixed(1);
-            return `${label}: ${formatCurrency(value)} (${percentage}%)`;
-          }
-        }
       },
       datalabels: {
         color: theme.palette.mode === 'light' ? '#ffffff' : '#1a1a1a',
@@ -455,6 +672,42 @@ function Dashboard() {
       }
     },
     cutout: '70%',
+  };
+
+  // Income by Category options
+  const incomeDoughnutOptions = {
+    ...doughnutOptions,
+    plugins: {
+      ...doughnutOptions.plugins,
+      tooltip: {
+        enabled: false,
+        external: incomeTooltip
+      }
+    }
+  };
+
+  // Expenses by Category options
+  const expenseDoughnutOptions = {
+    ...doughnutOptions,
+    plugins: {
+      ...doughnutOptions.plugins,
+      tooltip: {
+        enabled: false,
+        external: expenseTooltip
+      }
+    }
+  };
+
+  // Income vs Expenses Overview options
+  const overviewDoughnutOptions = {
+    ...doughnutOptions,
+    plugins: {
+      ...doughnutOptions.plugins,
+      tooltip: {
+        enabled: false,
+        external: overviewTooltip
+      }
+    }
   };
 
   const incomeVsExpensesData = {
@@ -1120,7 +1373,7 @@ function Dashboard() {
                 Income by Category
               </Typography>
               <Box sx={{ flex: 1, position: 'relative' }}>
-                <Doughnut data={incomeDoughnutData} options={doughnutOptions} />
+                <Doughnut data={incomeDoughnutData} options={incomeDoughnutOptions} />
               </Box>
             </Paper>
           </Grid>
@@ -1157,7 +1410,7 @@ function Dashboard() {
                 Expenses by Category
               </Typography>
               <Box sx={{ flex: 1, position: 'relative' }}>
-                <Doughnut data={expenseDoughnutData} options={doughnutOptions} />
+                <Doughnut data={expenseDoughnutData} options={expenseDoughnutOptions} />
               </Box>
             </Paper>
           </Grid>
@@ -1196,7 +1449,7 @@ function Dashboard() {
               <Box sx={{ flex: 1, position: 'relative' }}>
                 <Doughnut
                   data={incomeVsExpensesData}
-                  options={incomeVsExpensesOptions}
+                  options={overviewDoughnutOptions}
                 />
               </Box>
             </Paper>
