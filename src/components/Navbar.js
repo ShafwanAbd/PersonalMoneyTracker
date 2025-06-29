@@ -5,7 +5,7 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import { ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import { Link } from 'react-router-dom';
 import ReceiptIcon from '@mui/icons-material/Receipt';
-import SettingsIcon from '@mui/icons-material/Settings';
+import FlagIcon from '@mui/icons-material/Flag';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 
@@ -47,10 +47,10 @@ function Navbar({ mode, toggleTheme }) {
           <Button
             color="inherit"
             component={RouterLink}
-            to="/settings"
-            startIcon={<SettingsIcon />}
+            to="/goals"
+            startIcon={<FlagIcon />}
           >
-            Settings
+            Goals
           </Button>
           <IconButton 
             onClick={toggleTheme} 

@@ -1002,7 +1002,7 @@ function Dashboard() {
     if (messages.length === 0) {
       const welcomeMessage = {
         id: Date.now(),
-        text: "Hello! I'm your AI financial assistant. I can help you analyze your spending patterns, provide insights about your finances, and answer questions about your transactions. How can I help you today?",
+        text: "Hello! I'm Iwa Assistant your personal finance assistant. I can help you analyze your spending patterns, provide insights about your finances, and answer questions about your transactions. How can I help you today?",
         sender: 'ai',
         timestamp: new Date().toLocaleTimeString()
       };
@@ -1617,7 +1617,7 @@ function Dashboard() {
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <SmartToyIcon />
-            AI Financial Assistant
+            Iwa Assistant
           </Box>
           <IconButton onClick={() => setChatOpen(false)} sx={{ color: 'white' }}>
             <CloseIcon />

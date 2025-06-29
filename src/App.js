@@ -4,8 +4,8 @@ import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { Container, Box } from '@mui/material';
 import Dashboard from './components/Dashboard';
 import Transactions from './components/Transactions';
+import Goals from './components/Goals';
 import Navbar from './components/Navbar';
-import Settings from './components/Settings';
 
 function App() {
   const [mode, setMode] = useState('dark');
@@ -109,7 +109,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/transactions" element={<Transactions />} />
-              <Route path="/settings" element={<Settings />} />
+              <Route path="/goals" element={<Goals />} />
             </Routes>
           </Box>
         </Box>

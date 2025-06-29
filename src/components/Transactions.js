@@ -28,6 +28,7 @@ import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import UploadIcon from '@mui/icons-material/Upload';
+import DownloadIcon from '@mui/icons-material/Download';
 import { useTheme } from '@mui/material/styles';
 import Autocomplete from '@mui/material/Autocomplete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -540,6 +541,7 @@ function Transactions() {
                   onClick={handleExport}
                   disabled={isExporting}
                   variant="contained"
+                  startIcon={<DownloadIcon />}
                   sx={{
                     background: theme.palette.mode === 'light'
                       ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
