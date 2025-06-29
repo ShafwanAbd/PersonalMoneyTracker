@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Grid, Paper, Typography, Box, useTheme, Button } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { Grid, Paper, Typography, Box, useTheme, Button, Fab, Dialog, DialogTitle, DialogContent, TextField, IconButton, List, ListItem, ListItemText, Avatar } from '@mui/material';
 import { Doughnut, Bar, Line } from 'react-chartjs-2';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -16,8 +18,12 @@ import {
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import axios from 'axios';
 import MenuItem from '@mui/material/MenuItem';
-import TextField from '@mui/material/TextField';
 import { motion } from 'framer-motion';
+import ChatIcon from '@mui/icons-material/Chat';
+import SendIcon from '@mui/icons-material/Send';
+import CloseIcon from '@mui/icons-material/Close';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
+import PersonIcon from '@mui/icons-material/Person';
 
 ChartJS.register(
   ArcElement,
@@ -85,6 +91,16 @@ function Dashboard() {
   const [valueMode, setValueMode] = useState('default');
   const [rangeData, setRangeData] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
+  
+  // AI Chat states
+  const [chatOpen, setChatOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Ref for input field
+  const inputRef = useRef(null);
+
   const rangeOptions = [
     { value: '7d', label: '7 Days' },
     { value: '30d', label: '30 Days' },
@@ -907,6 +923,103 @@ function Dashboard() {
     },
   };
 
+  // AI Chat functions
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || isLoading) return;
+
+    const userMessage = {
+      id: Date.now(),
+      text: inputMessage,
+      sender: 'user',
+      timestamp: new Date().toLocaleTimeString()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
+    setIsLoading(true);
+
+    // Auto-focus the input field
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 100);
+
+    try {
+      // Create context from financial data
+      const context = {
+        totalIncome: summary.totalIncome,
+        totalExpenses: summary.totalExpenses,
+        balance: summary.balance,
+        incomeCategories: summary.categoryIncome,
+        expenseCategories: summary.categoryExpenses,
+        dailyAverages: summary.dailyAverages
+      };
+
+      const response = await axios.post('http://localhost:5000/api/ai-chat', {
+        message: inputMessage,
+        context: context
+      });
+
+      const aiMessage = {
+        id: Date.now() + 1,
+        text: response.data.response,
+        sender: 'ai',
+        timestamp: new Date().toLocaleTimeString()
+      };
+
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      const errorMessage = {
+        id: Date.now() + 1,
+        text: "Sorry, I'm having trouble connecting right now. Please try again later.",
+        sender: 'ai',
+        timestamp: new Date().toLocaleTimeString()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+      // Auto-focus again after AI responds
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const openChat = () => {
+    setChatOpen(true);
+    // Add welcome message if it's the first time opening
+    if (messages.length === 0) {
+      const welcomeMessage = {
+        id: Date.now(),
+        text: "Hello! I'm your AI financial assistant. I can help you analyze your spending patterns, provide insights about your finances, and answer questions about your transactions. How can I help you today?",
+        sender: 'ai',
+        timestamp: new Date().toLocaleTimeString()
+      };
+      setMessages([welcomeMessage]);
+    }
+  };
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (chatOpen) {
+      const messagesContainer = document.getElementById('messages-container');
+      if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+    }
+  }, [messages, chatOpen, isLoading]);
+
   return (
     <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: 'easeOut' }}>
       <Box sx={{ m: 0, p: 3, minHeight: '100vh' }}>
@@ -961,7 +1074,7 @@ function Dashboard() {
                   '&:hover': {
                     boxShadow: theme.palette.mode === 'light'
                       ? '0 8px 32px rgba(79, 172, 254, 0.15)'
-                      : '0 8px 32px rgba(79, 172, 254, 0.18)',
+                      : '0 8px 32px rgba(79, 172, 254, 0.1)',
                   },
                 }}
               >
@@ -1456,6 +1569,258 @@ function Dashboard() {
           </Grid>
         </Grid>
       </Box>
+      
+      {/* AI Chat Floating Button */}
+      <Fab
+        color="primary"
+        aria-label="AI Chat"
+        onClick={openChat}
+        sx={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          background: 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
+          '&:hover': {
+            background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            transform: 'scale(1.1)',
+          },
+          transition: 'all 0.3s ease',
+          boxShadow: '0 4px 20px rgba(0, 242, 254, 0.3)',
+        }}
+      >
+        <ChatIcon />
+      </Fab>
+
+      {/* AI Chat Dialog */}
+      <Dialog
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            height: '70vh',
+            background: theme.palette.mode === 'light' 
+              ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+              : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
+            border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          background: 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
+          color: 'white',
+          fontWeight: 'bold'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <SmartToyIcon />
+            AI Financial Assistant
+          </Box>
+          <IconButton onClick={() => setChatOpen(false)} sx={{ color: 'white' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        
+        <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column' }}>
+          {/* Messages Area */}
+          <Box 
+            id="messages-container"
+            sx={{ 
+              flex: 1, 
+              overflowY: 'auto', 
+              p: 2,
+              maxHeight: '50vh'
+            }}
+          >
+            <List sx={{ p: 0 }}>
+              {messages.map((message) => (
+                <ListItem
+                  key={message.id}
+                  sx={{
+                    display: 'flex',
+                    justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start',
+                    px: 0,
+                    py: 1
+                  }}
+                >
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 1,
+                    maxWidth: '80%',
+                    flexDirection: message.sender === 'user' ? 'row-reverse' : 'row'
+                  }}>
+                    <Avatar sx={{ 
+                      width: 32, 
+                      height: 32,
+                      bgcolor: message.sender === 'user' ? '#4facfe' : '#00f2fe',
+                      fontSize: '0.875rem'
+                    }}>
+                      {message.sender === 'user' ? <PersonIcon /> : <SmartToyIcon />}
+                    </Avatar>
+                    <Box sx={{
+                      background: message.sender === 'user' 
+                        ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+                        : theme.palette.mode === 'light' 
+                          ? 'rgba(255, 255, 255, 0.9)'
+                          : 'rgba(20, 30, 40, 0.9)',
+                      color: message.sender === 'user' ? 'white' : theme.palette.text.primary,
+                      borderRadius: 2,
+                      p: 2,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      wordBreak: 'break-word'
+                    }}>
+                      {message.sender === 'user' ? (
+                        <Typography variant="body2" sx={{ mb: 0.5 }}>
+                          {message.text}
+                        </Typography>
+                      ) : (
+                        <Box sx={{ mb: 0.5 }}>
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              p: ({ children }) => (
+                                <Typography variant="body2" sx={{ mb: 1, '&:last-child': { mb: 0 } }}>
+                                  {children}
+                                </Typography>
+                              ),
+                              h1: ({ children }) => (
+                                <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1, color: '#4facfe' }}>
+                                  {children}
+                                </Typography>
+                              ),
+                              h2: ({ children }) => (
+                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#4facfe' }}>
+                                  {children}
+                                </Typography>
+                              ),
+                              h3: ({ children }) => (
+                                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: '#4facfe' }}>
+                                  {children}
+                                </Typography>
+                              ),
+                              strong: ({ children }) => (
+                                <Typography component="span" sx={{ fontWeight: 'bold', color: '#4facfe' }}>
+                                  {children}
+                                </Typography>
+                              ),
+                              ul: ({ children }) => (
+                                <Box component="ul" sx={{ pl: 2, mb: 1 }}>
+                                  {children}
+                                </Box>
+                              ),
+                              ol: ({ children }) => (
+                                <Box component="ol" sx={{ pl: 2, mb: 1 }}>
+                                  {children}
+                                </Box>
+                              ),
+                              li: ({ children }) => (
+                                <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
+                                  {children}
+                                </Typography>
+                              ),
+                              blockquote: ({ children }) => (
+                                <Box sx={{ 
+                                  borderLeft: '3px solid #4facfe', 
+                                  pl: 2, 
+                                  mb: 1,
+                                  fontStyle: 'italic',
+                                  opacity: 0.8
+                                }}>
+                                  {children}
+                                </Box>
+                              ),
+                            }}
+                          >
+                            {message.text}
+                          </ReactMarkdown>
+                        </Box>
+                      )}
+                      <Typography variant="caption" sx={{ 
+                        opacity: 0.7,
+                        fontSize: '0.7rem'
+                      }}>
+                        {message.timestamp}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </ListItem>
+              ))}
+              {isLoading && (
+                <ListItem sx={{ display: 'flex', justifyContent: 'flex-start', px: 0, py: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                    <Avatar sx={{ width: 32, height: 32, bgcolor: '#00f2fe' }}>
+                      <SmartToyIcon />
+                    </Avatar>
+                    <Box sx={{
+                      background: theme.palette.mode === 'light' 
+                        ? 'rgba(255, 255, 255, 0.9)'
+                        : 'rgba(20, 30, 40, 0.9)',
+                      borderRadius: 2,
+                      p: 2,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}>
+                      <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+                        AI is thinking...
+                      </Typography>
+                    </Box>
+                  </Box>
+                </ListItem>
+              )}
+            </List>
+          </Box>
+          
+          {/* Input Area */}
+          <Box sx={{ 
+            p: 2, 
+            borderTop: `1px solid ${theme.palette.divider}`,
+            background: theme.palette.mode === 'light' 
+              ? 'rgba(255, 255, 255, 0.8)'
+              : 'rgba(20, 30, 40, 0.8)'
+          }}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Ask me about your finances..."
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                disabled={isLoading}
+                inputRef={inputRef}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    background: theme.palette.mode === 'light' 
+                      ? 'rgba(255, 255, 255, 0.9)'
+                      : 'rgba(255, 255, 255, 0.1)',
+                  }
+                }}
+              />
+              <IconButton
+                onClick={handleSendMessage}
+                disabled={!inputMessage.trim() || isLoading}
+                sx={{
+                  background: 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
+                  color: 'white',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                  },
+                  '&:disabled': {
+                    background: 'rgba(0,0,0,0.12)',
+                    color: 'rgba(0,0,0,0.26)'
+                  }
+                }}
+              >
+                <SendIcon />
+              </IconButton>
+            </Box>
+          </Box>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
