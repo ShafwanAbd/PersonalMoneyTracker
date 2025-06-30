@@ -25,7 +25,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import PersonIcon from '@mui/icons-material/Person';
 import Slider from 'react-slick';
-import "slick-carousel/slick/slick.css"; 
+import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 ChartJS.register(
@@ -89,32 +89,32 @@ function Dashboard() {
     categoryIncome: [],
     dailyAverages: [],
   });
-  
+
   // Load chart options from localStorage with defaults
   const [range, setRange] = useState(() => {
     const savedRange = localStorage.getItem('dashboard-range');
     return savedRange || 'all';
   });
-  
+
   const [viewType, setViewType] = useState(() => {
     const savedViewType = localStorage.getItem('dashboard-viewType');
     return savedViewType || 'simple';
   });
-  
+
   const [valueMode, setValueMode] = useState(() => {
     const savedValueMode = localStorage.getItem('dashboard-valueMode');
     return savedValueMode || 'default';
   });
-  
+
   const [rangeData, setRangeData] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
-  
+
   // AI Chat states
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Ref for input field
   const inputRef = useRef(null);
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -154,7 +154,7 @@ function Dashboard() {
   useEffect(() => {
     const fetchSummary = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/summary');
+        const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/summary`);
         setSummary(response.data);
       } catch (error) {
         console.error('Error fetching summary:', error);
@@ -166,7 +166,7 @@ function Dashboard() {
   useEffect(() => {
     const fetchRangeData = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/transactions/summary-range?range=${range}&breakdown=${viewType}`);
+        const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/transactions/summary-range?range=${range}&breakdown=${viewType}`);
         console.log('Fetched data:', response.data); // Debug log
         setRangeData(response.data);
       } catch (error) {
@@ -988,7 +988,7 @@ function Dashboard() {
         dailyAverages: summary.dailyAverages
       };
 
-      const response = await axios.post('http://localhost:5000/api/ai-chat', {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/ai-chat`, {
         message: inputMessage,
         context: context
       });
@@ -1076,7 +1076,7 @@ function Dashboard() {
                   display: 'flex',
                   flexDirection: 'column',
                   width: '100%',
-                  background: theme.palette.mode === 'light' 
+                  background: theme.palette.mode === 'light'
                     ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
                     : 'linear-gradient(135deg, rgba(0, 242, 254, 0.1) 0%, rgba(0, 242, 254, 0.05) 100%)',
                   color: theme.palette.text.primary,
@@ -1088,10 +1088,10 @@ function Dashboard() {
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00f2fe' }}>
                   Total Income
                 </Typography>
-                <Typography variant="h4" sx={{ 
-                  fontWeight: 'bold', 
+                <Typography variant="h4" sx={{
+                  fontWeight: 'bold',
                   color: '#00ff9d',
-                  fontSize: { xs: '1.5rem', sm: '2.125rem' } 
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' }
                 }}>
                   <AnimatedNumber value={summary.totalIncome} />
                 </Typography>
@@ -1104,7 +1104,7 @@ function Dashboard() {
                   p: 3,
                   display: 'flex',
                   flexDirection: 'column',
-                  background: theme.palette.mode === 'light' 
+                  background: theme.palette.mode === 'light'
                     ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
                     : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
                   color: theme.palette.text.primary,
@@ -1116,10 +1116,10 @@ function Dashboard() {
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#4facfe' }}>
                   Total Expenses
                 </Typography>
-                <Typography variant="h4" sx={{ 
-                  fontWeight: 'bold', 
+                <Typography variant="h4" sx={{
+                  fontWeight: 'bold',
                   color: '#ff6b6b',
-                  fontSize: { xs: '1.5rem', sm: '2.125rem' } 
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' }
                 }}>
                   <AnimatedNumber value={summary.totalExpenses} />
                 </Typography>
@@ -1132,7 +1132,7 @@ function Dashboard() {
                   p: 3,
                   display: 'flex',
                   flexDirection: 'column',
-                  background: theme.palette.mode === 'light' 
+                  background: theme.palette.mode === 'light'
                     ? 'linear-gradient(135deg, rgba(0, 255, 157, 0.05) 0%, rgba(0, 255, 157, 0.02) 100%)'
                     : 'linear-gradient(135deg, rgba(0, 255, 157, 0.1) 0%, rgba(0, 255, 157, 0.05) 100%)',
                   color: theme.palette.text.primary,
@@ -1144,9 +1144,9 @@ function Dashboard() {
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00ff9d' }}>
                   Balance
                 </Typography>
-                <Typography variant="h4" sx={{ 
+                <Typography variant="h4" sx={{
                   fontWeight: 'bold',
-                  fontSize: { xs: '1.5rem', sm: '2.125rem' } 
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' }
                 }}>
                   <AnimatedNumber value={summary.balance} />
                 </Typography>
@@ -1164,7 +1164,7 @@ function Dashboard() {
                   display: 'flex',
                   flexDirection: 'column',
                   width: '100%',
-                  background: theme.palette.mode === 'light' 
+                  background: theme.palette.mode === 'light'
                     ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
                     : 'linear-gradient(135deg, rgba(0, 242, 254, 0.1) 0%, rgba(0, 242, 254, 0.05) 100%)',
                   color: theme.palette.text.primary,
@@ -1181,10 +1181,10 @@ function Dashboard() {
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00f2fe' }}>
                   Total Income
                 </Typography>
-                <Typography variant="h4" sx={{ 
-                  fontWeight: 'bold', 
+                <Typography variant="h4" sx={{
+                  fontWeight: 'bold',
                   color: '#00ff9d',
-                  fontSize: { xs: '1.5rem', sm: '2.125rem' } 
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' }
                 }}>
                   <AnimatedNumber value={summary.totalIncome} />
                 </Typography>
@@ -1199,7 +1199,7 @@ function Dashboard() {
                   p: 3,
                   display: 'flex',
                   flexDirection: 'column',
-                  background: theme.palette.mode === 'light' 
+                  background: theme.palette.mode === 'light'
                     ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
                     : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
                   color: theme.palette.text.primary,
@@ -1216,10 +1216,10 @@ function Dashboard() {
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#4facfe' }}>
                   Total Expenses
                 </Typography>
-                <Typography variant="h4" sx={{ 
-                  fontWeight: 'bold', 
+                <Typography variant="h4" sx={{
+                  fontWeight: 'bold',
                   color: '#ff6b6b',
-                  fontSize: { xs: '1.5rem', sm: '2.125rem' } 
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' }
                 }}>
                   <AnimatedNumber value={summary.totalExpenses} />
                 </Typography>
@@ -1234,7 +1234,7 @@ function Dashboard() {
                   p: 3,
                   display: 'flex',
                   flexDirection: 'column',
-                  background: theme.palette.mode === 'light' 
+                  background: theme.palette.mode === 'light'
                     ? 'linear-gradient(135deg, rgba(0, 255, 157, 0.05) 0%, rgba(0, 255, 157, 0.02) 100%)'
                     : 'linear-gradient(135deg, rgba(0, 255, 157, 0.1) 0%, rgba(0, 255, 157, 0.05) 100%)',
                   color: theme.palette.text.primary,
@@ -1251,9 +1251,9 @@ function Dashboard() {
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00ff9d' }}>
                   Balance
                 </Typography>
-                <Typography variant="h4" sx={{ 
+                <Typography variant="h4" sx={{
                   fontWeight: 'bold',
-                  fontSize: { xs: '1.5rem', sm: '2.125rem' } 
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' }
                 }}>
                   <AnimatedNumber value={summary.balance} />
                 </Typography>
@@ -1273,9 +1273,8 @@ function Dashboard() {
                 flexDirection: 'column',
                 borderRadius: 2,
                 width: '100%',
-                borderRadius: 2,
                 transition: 'all 0.3s ease',
-                background: theme.palette.mode === 'light' 
+                background: theme.palette.mode === 'light'
                   ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
                   : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
                 border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
@@ -1287,8 +1286,6 @@ function Dashboard() {
                 m: 0,
                 mb: 3,
                 height: isMobile && isPortrait ? 300 : 'auto',
-                display: 'flex',
-                flexDirection: 'column',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, width: '100%' }}>
@@ -1302,10 +1299,10 @@ function Dashboard() {
                       value={viewType}
                       onChange={e => setViewType(e.target.value)}
                       size="small"
-                      sx={{ 
-                        minWidth: 120, 
+                      sx={{
+                        minWidth: 120,
                         mx: 1,
-                        background: theme.palette.mode === 'light' 
+                        background: theme.palette.mode === 'light'
                           ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
                           : 'rgba(10,25,41,0.7)',
                         borderRadius: 2,
@@ -1329,7 +1326,7 @@ function Dashboard() {
                         MenuProps: {
                           PaperProps: {
                             sx: {
-                              background: theme.palette.mode === 'light' 
+                              background: theme.palette.mode === 'light'
                                 ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
                                 : 'rgba(10,25,41,0.95)',
                               backdropFilter: 'blur(10px)',
@@ -1337,16 +1334,16 @@ function Dashboard() {
                               '& .MuiMenuItem-root': {
                                 color: theme.palette.text.primary,
                                 '&:hover': {
-                                  background: theme.palette.mode === 'light' 
+                                  background: theme.palette.mode === 'light'
                                     ? 'rgba(79, 172, 254, 0.1)'
                                     : 'rgba(255, 255, 255, 0.1)',
                                 },
                                 '&.Mui-selected': {
-                                  background: theme.palette.mode === 'light' 
+                                  background: theme.palette.mode === 'light'
                                     ? 'rgba(79, 172, 254, 0.15)'
                                     : 'rgba(255, 255, 255, 0.15)',
                                   '&:hover': {
-                                    background: theme.palette.mode === 'light' 
+                                    background: theme.palette.mode === 'light'
                                       ? 'rgba(79, 172, 254, 0.2)'
                                       : 'rgba(255, 255, 255, 0.2)',
                                   },
@@ -1366,10 +1363,10 @@ function Dashboard() {
                       value={valueMode}
                       onChange={e => setValueMode(e.target.value)}
                       size="small"
-                      sx={{ 
-                        minWidth: 120, 
+                      sx={{
+                        minWidth: 120,
                         mx: 1,
-                        background: theme.palette.mode === 'light' 
+                        background: theme.palette.mode === 'light'
                           ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
                           : 'rgba(10,25,41,0.7)',
                         borderRadius: 2,
@@ -1393,7 +1390,7 @@ function Dashboard() {
                         MenuProps: {
                           PaperProps: {
                             sx: {
-                              background: theme.palette.mode === 'light' 
+                              background: theme.palette.mode === 'light'
                                 ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
                                 : 'rgba(10,25,41,0.95)',
                               backdropFilter: 'blur(10px)',
@@ -1401,16 +1398,16 @@ function Dashboard() {
                               '& .MuiMenuItem-root': {
                                 color: theme.palette.text.primary,
                                 '&:hover': {
-                                  background: theme.palette.mode === 'light' 
+                                  background: theme.palette.mode === 'light'
                                     ? 'rgba(79, 172, 254, 0.1)'
                                     : 'rgba(255, 255, 255, 0.1)',
                                 },
                                 '&.Mui-selected': {
-                                  background: theme.palette.mode === 'light' 
+                                  background: theme.palette.mode === 'light'
                                     ? 'rgba(79, 172, 254, 0.15)'
                                     : 'rgba(255, 255, 255, 0.15)',
                                   '&:hover': {
-                                    background: theme.palette.mode === 'light' 
+                                    background: theme.palette.mode === 'light'
                                       ? 'rgba(79, 172, 254, 0.2)'
                                       : 'rgba(255, 255, 255, 0.2)',
                                   },
@@ -1430,10 +1427,10 @@ function Dashboard() {
                       value={range}
                       onChange={e => setRange(e.target.value)}
                       size="small"
-                      sx={{ 
-                        minWidth: 160, 
+                      sx={{
+                        minWidth: 160,
                         mx: 1,
-                        background: theme.palette.mode === 'light' 
+                        background: theme.palette.mode === 'light'
                           ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
                           : 'rgba(10,25,41,0.7)',
                         borderRadius: 2,
@@ -1457,7 +1454,7 @@ function Dashboard() {
                         MenuProps: {
                           PaperProps: {
                             sx: {
-                              background: theme.palette.mode === 'light' 
+                              background: theme.palette.mode === 'light'
                                 ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
                                 : 'rgba(10,25,41,0.95)',
                               backdropFilter: 'blur(10px)',
@@ -1465,16 +1462,16 @@ function Dashboard() {
                               '& .MuiMenuItem-root': {
                                 color: theme.palette.text.primary,
                                 '&:hover': {
-                                  background: theme.palette.mode === 'light' 
+                                  background: theme.palette.mode === 'light'
                                     ? 'rgba(79, 172, 254, 0.1)'
                                     : 'rgba(255, 255, 255, 0.1)',
                                 },
                                 '&.Mui-selected': {
-                                  background: theme.palette.mode === 'light' 
+                                  background: theme.palette.mode === 'light'
                                     ? 'rgba(79, 172, 254, 0.15)'
                                     : 'rgba(255, 255, 255, 0.15)',
                                   '&:hover': {
-                                    background: theme.palette.mode === 'light' 
+                                    background: theme.palette.mode === 'light'
                                       ? 'rgba(79, 172, 254, 0.2)'
                                       : 'rgba(255, 255, 255, 0.2)',
                                   },
@@ -1608,7 +1605,7 @@ function Dashboard() {
           </Grid>
         </Grid>
 
-        <Grid container spacing={3} justifyContent="space-between"> 
+        <Grid container spacing={3} justifyContent="space-between">
           <Grid item xs={12} md={6}>
             <Paper
               elevation={0}
@@ -1619,7 +1616,7 @@ function Dashboard() {
                 height: 400,
                 borderRadius: 2,
                 transition: 'all 0.3s ease',
-                background: theme.palette.mode === 'light' 
+                background: theme.palette.mode === 'light'
                   ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
                   : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
                 border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
@@ -1630,13 +1627,13 @@ function Dashboard() {
                 },
               }}
             >
-              <Typography 
-                variant="h6" 
-                gutterBottom 
-                sx={{ 
-                  fontWeight: 500, 
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{
+                  fontWeight: 500,
                   color: theme.palette.mode === 'light' ? '#4facfe' : '#4facfe',
-                  mb: 2 
+                  mb: 2
                 }}
               >
                 Income by Category
@@ -1656,7 +1653,7 @@ function Dashboard() {
                 height: 400,
                 borderRadius: 2,
                 transition: 'all 0.3s ease',
-                background: theme.palette.mode === 'light' 
+                background: theme.palette.mode === 'light'
                   ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
                   : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
                 border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
@@ -1667,13 +1664,13 @@ function Dashboard() {
                 },
               }}
             >
-              <Typography 
-                variant="h6" 
-                gutterBottom 
-                sx={{ 
-                  fontWeight: 500, 
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{
+                  fontWeight: 500,
                   color: theme.palette.mode === 'light' ? '#4facfe' : '#4facfe',
-                  mb: 2 
+                  mb: 2
                 }}
               >
                 Expenses by Category
@@ -1693,7 +1690,7 @@ function Dashboard() {
                 height: 400,
                 borderRadius: 2,
                 transition: 'all 0.3s ease',
-                background: theme.palette.mode === 'light' 
+                background: theme.palette.mode === 'light'
                   ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
                   : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
                 border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
@@ -1704,13 +1701,13 @@ function Dashboard() {
                 },
               }}
             >
-              <Typography 
-                variant="h6" 
-                gutterBottom 
-                sx={{ 
-                  fontWeight: 500, 
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{
+                  fontWeight: 500,
                   color: theme.palette.mode === 'light' ? '#4facfe' : '#4facfe',
-                  mb: 2 
+                  mb: 2
                 }}
               >
                 Income vs Expenses Overview
@@ -1725,7 +1722,7 @@ function Dashboard() {
           </Grid>
         </Grid>
       </Box>
-      
+
       {/* AI Chat Floating Button */}
       <Fab
         color="primary"
@@ -1756,16 +1753,16 @@ function Dashboard() {
         PaperProps={{
           sx: {
             height: '70vh',
-            background: theme.palette.mode === 'light' 
+            background: theme.palette.mode === 'light'
               ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
               : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
             border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
           }
         }}
       >
-        <DialogTitle sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+        <DialogTitle sx={{
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'space-between',
           background: 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
           color: 'white',
@@ -1779,14 +1776,14 @@ function Dashboard() {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        
+
         <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column' }}>
           {/* Messages Area */}
-          <Box 
+          <Box
             id="messages-container"
-            sx={{ 
-              flex: 1, 
-              overflowY: 'auto', 
+            sx={{
+              flex: 1,
+              overflowY: 'auto',
               p: 2,
               maxHeight: '50vh'
             }}
@@ -1809,8 +1806,8 @@ function Dashboard() {
                     maxWidth: '80%',
                     flexDirection: message.sender === 'user' ? 'row-reverse' : 'row'
                   }}>
-                    <Avatar sx={{ 
-                      width: 32, 
+                    <Avatar sx={{
+                      width: 32,
                       height: 32,
                       bgcolor: message.sender === 'user' ? '#4facfe' : '#00f2fe',
                       fontSize: '0.875rem'
@@ -1818,9 +1815,9 @@ function Dashboard() {
                       {message.sender === 'user' ? <PersonIcon /> : <SmartToyIcon />}
                     </Avatar>
                     <Box sx={{
-                      background: message.sender === 'user' 
+                      background: message.sender === 'user'
                         ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
-                        : theme.palette.mode === 'light' 
+                        : theme.palette.mode === 'light'
                           ? 'rgba(255, 255, 255, 0.9)'
                           : 'rgba(20, 30, 40, 0.9)',
                       color: message.sender === 'user' ? 'white' : theme.palette.text.primary,
@@ -1879,9 +1876,9 @@ function Dashboard() {
                                 </Typography>
                               ),
                               blockquote: ({ children }) => (
-                                <Box sx={{ 
-                                  borderLeft: '3px solid #4facfe', 
-                                  pl: 2, 
+                                <Box sx={{
+                                  borderLeft: '3px solid #4facfe',
+                                  pl: 2,
                                   mb: 1,
                                   fontStyle: 'italic',
                                   opacity: 0.8
@@ -1895,7 +1892,7 @@ function Dashboard() {
                           </ReactMarkdown>
                         </Box>
                       )}
-                      <Typography variant="caption" sx={{ 
+                      <Typography variant="caption" sx={{
                         opacity: 0.7,
                         fontSize: '0.7rem'
                       }}>
@@ -1912,7 +1909,7 @@ function Dashboard() {
                       <SmartToyIcon />
                     </Avatar>
                     <Box sx={{
-                      background: theme.palette.mode === 'light' 
+                      background: theme.palette.mode === 'light'
                         ? 'rgba(255, 255, 255, 0.9)'
                         : 'rgba(20, 30, 40, 0.9)',
                       borderRadius: 2,
@@ -1928,12 +1925,12 @@ function Dashboard() {
               )}
             </List>
           </Box>
-          
+
           {/* Input Area */}
-          <Box sx={{ 
-            p: 2, 
+          <Box sx={{
+            p: 2,
             borderTop: `1px solid ${theme.palette.divider}`,
-            background: theme.palette.mode === 'light' 
+            background: theme.palette.mode === 'light'
               ? 'rgba(255, 255, 255, 0.8)'
               : 'rgba(20, 30, 40, 0.8)'
           }}>
@@ -1950,7 +1947,7 @@ function Dashboard() {
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 3,
-                    background: theme.palette.mode === 'light' 
+                    background: theme.palette.mode === 'light'
                       ? 'rgba(255, 255, 255, 0.9)'
                       : 'rgba(255, 255, 255, 0.1)',
                   }
@@ -1981,4 +1978,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard; 
+export default Dashboard;

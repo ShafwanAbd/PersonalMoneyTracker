@@ -120,7 +120,7 @@ function Transactions() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/categories');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/categories`);
       setCategories(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -129,7 +129,7 @@ function Transactions() {
 
   const fetchTransactions = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/transactions');
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/transactions`);
       const data = await response.json();
       setTransactions(data);
     } catch (error) {
@@ -164,12 +164,12 @@ function Transactions() {
         amount: numAmount,
         category,
         date: date.toISOString(),
-      formattedDate: formattedDate,
+        formattedDate: formattedDate,
         description,
         type
       };
 
-      await axios.post('http://localhost:5000/api/transactions', transactionData);
+      await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/transactions`, transactionData);
       
       // Reset form
       setAmount('');
@@ -188,7 +188,7 @@ function Transactions() {
 
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/transactions/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/transactions/${id}`, {
         method: 'DELETE',
       });
 
@@ -203,7 +203,7 @@ function Transactions() {
   const handleAddCategory = async () => {
     if (!newCategory) return;
     try {
-      const response = await fetch('http://localhost:5000/api/categories', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/categories`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -235,7 +235,7 @@ function Transactions() {
     }
     try {
       // First update the category name
-      const response = await fetch(`http://localhost:5000/api/categories/${oldName}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/categories/${oldName}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ newName: editCategoryValue }),
@@ -243,7 +243,7 @@ function Transactions() {
       
       if (response.ok) {
         // Then update all transactions that use this category
-        const updateResponse = await fetch(`http://localhost:5000/api/transactions/category/${oldName}`, {
+        const updateResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/transactions/category/${oldName}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ newCategory: editCategoryValue }),
@@ -276,7 +276,7 @@ function Transactions() {
 
   const handleDeleteCategory = async (categoryName) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/categories/${categoryName}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/categories/${categoryName}`, {
         method: 'DELETE',
       });
 
@@ -346,7 +346,7 @@ function Transactions() {
     const type = numAmount >= 0 ? 'income' : 'expense';
     const updated = { ...editTransaction, amount: numAmount, type };
     try {
-      const response = await fetch(`http://localhost:5000/api/transactions/${editTransaction._id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/transactions/${editTransaction._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated),
@@ -369,7 +369,7 @@ function Transactions() {
   const handleDeleteConfirm = async () => {
     if (!deleteId) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/transactions/${deleteId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/transactions/${deleteId}`, {
         method: 'DELETE',
       });
       if (response.ok) {
@@ -431,7 +431,7 @@ function Transactions() {
       reader.onload = async (e) => {
         try {
           const csvData = e.target.result;
-          const response = await axios.post('http://localhost:5000/api/import/csv', {
+          const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/import/csv`, {
             csvData: csvData
           });
 
@@ -462,7 +462,7 @@ function Transactions() {
   const handleDeleteAll = async () => {
     try {
       setIsDeletingAll(true);
-      const response = await axios.delete('http://localhost:5000/api/transactions/all');
+      const response = await axios.delete(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/transactions/all`);
       
       if (response.status === 200) {
         setShowDeleteAllDialog(false);
