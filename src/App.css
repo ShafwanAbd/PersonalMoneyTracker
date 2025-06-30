@@ -1,3 +1,5 @@
+/* Remove the pink background test */
+
 .App {
   text-align: center;
 }
@@ -35,4 +37,51 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Elegant glowing effect for Goals progress bar */
+.glowing-progress {
+  overflow: visible !important;
+  position: relative;
+  z-index: 10;
+}
+.glowing-progress .MuiLinearProgress-bar,
+.glowing-progress .MuiLinearProgress-bar1Determinate {
+  box-shadow: 0 0 16px 4px rgba(0,242,254,0.35), 0 0 32px 8px rgba(79,172,254,0.18) !important;
+  animation: glowPulse 2.2s ease-in-out infinite alternate !important;
+  transition: box-shadow 0.4s cubic-bezier(0.4,0,0.2,1) !important;
+}
+@keyframes glowPulse {
+  0% {
+    box-shadow: 0 0 16px 4px rgba(0,242,254,0.35), 0 0 32px 8px rgba(79,172,254,0.18);
+  }
+  100% {
+    box-shadow: 0 0 28px 8px rgba(0,242,254,0.55), 0 0 48px 16px rgba(79,172,254,0.28);
+  }
+}
+
+.glowing-progress .MuiLinearProgress-bar1Determinate {
+  position: relative;
+  overflow: visible;
+  box-shadow: 0 0 16px 4px rgba(0,242,254,0.35), 0 0 32px 8px rgba(79,172,254,0.18) !important;
+  transition: box-shadow 0.4s cubic-bezier(0.4,0,0.2,1) !important;
+  background: repeating-linear-gradient(
+    120deg,
+    yellow 0%,
+    yellow 20%,
+    orange 20%,
+    orange 40%,
+    yellow 40%,
+    yellow 60%,
+    transparent 60%,
+    transparent 100%
+  ) !important;
+  background-size: 200% 100% !important;
+  background-position: 100% 0 !important;
+  animation: shimmerMove 1.8s linear infinite !important;
+}
+
+@keyframes shimmerMove {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
 }

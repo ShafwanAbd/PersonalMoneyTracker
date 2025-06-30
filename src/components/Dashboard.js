@@ -86,9 +86,23 @@ function Dashboard() {
     categoryIncome: [],
     dailyAverages: [],
   });
-  const [range, setRange] = useState('all');
-  const [viewType, setViewType] = useState('simple');
-  const [valueMode, setValueMode] = useState('default');
+  
+  // Load chart options from localStorage with defaults
+  const [range, setRange] = useState(() => {
+    const savedRange = localStorage.getItem('dashboard-range');
+    return savedRange || 'all';
+  });
+  
+  const [viewType, setViewType] = useState(() => {
+    const savedViewType = localStorage.getItem('dashboard-viewType');
+    return savedViewType || 'simple';
+  });
+  
+  const [valueMode, setValueMode] = useState(() => {
+    const savedValueMode = localStorage.getItem('dashboard-valueMode');
+    return savedValueMode || 'default';
+  });
+  
   const [rangeData, setRangeData] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
   
@@ -100,6 +114,19 @@ function Dashboard() {
   
   // Ref for input field
   const inputRef = useRef(null);
+
+  // Save chart options to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('dashboard-range', range);
+  }, [range]);
+
+  useEffect(() => {
+    localStorage.setItem('dashboard-viewType', viewType);
+  }, [viewType]);
+
+  useEffect(() => {
+    localStorage.setItem('dashboard-valueMode', valueMode);
+  }, [valueMode]);
 
   const rangeOptions = [
     { value: '7d', label: '7 Days' },
@@ -115,8 +142,8 @@ function Dashboard() {
   ];
 
   const valueModeOptions = [
-    { value: 'default', label: 'Default' },
-    { value: 'sum', label: 'Sum' },
+    { value: 'default', label: 'Column Bar' },
+    { value: 'sum', label: 'Line Graph' },
   ];
 
   useEffect(() => {

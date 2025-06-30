@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard';
 import Transactions from './components/Transactions';
 import Goals from './components/Goals';
 import Navbar from './components/Navbar';
+import './App.css';
 
 function App() {
   const [mode, setMode] = useState('dark');
