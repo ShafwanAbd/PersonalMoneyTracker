@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Grid, Paper, Typography, Box, useTheme, Button, Fab, Dialog, DialogTitle, DialogContent, TextField, IconButton, List, ListItem, ListItemText, Avatar } from '@mui/material';
+import { Grid, Paper, Typography, Box, useTheme, Button, Fab, Dialog, DialogTitle, DialogContent, TextField, IconButton, List, ListItem, ListItemText, Avatar, useMediaQuery } from '@mui/material';
 import { Doughnut, Bar, Line } from 'react-chartjs-2';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -24,6 +24,9 @@ import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import PersonIcon from '@mui/icons-material/Person';
+import Slider from 'react-slick';
+import "slick-carousel/slick/slick.css"; 
+import "slick-carousel/slick/slick-theme.css";
 
 ChartJS.register(
   ArcElement,
@@ -114,6 +117,8 @@ function Dashboard() {
   
   // Ref for input field
   const inputRef = useRef(null);
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isPortrait = useMediaQuery('(orientation: portrait)');
 
   // Save chart options to localStorage whenever they change
   useEffect(() => {
@@ -1047,11 +1052,110 @@ function Dashboard() {
     }
   }, [messages, chatOpen, isLoading]);
 
+  const sliderSettings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 3000,
+    arrows: false,
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: 'easeOut' }}>
       <Box sx={{ m: 0, p: 3, minHeight: '100vh' }}>
-        <Grid container spacing={0} width="100%" justifyContent="space-between">
-          <Grid item xs={12} md={4} sx={{ width: '32%' }}>
+        {isMobile ? (
+          <Slider {...sliderSettings}>
+            <Box sx={{ px: 1 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  width: '100%',
+                  background: theme.palette.mode === 'light' 
+                    ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                    : 'linear-gradient(135deg, rgba(0, 242, 254, 0.1) 0%, rgba(0, 242, 254, 0.05) 100%)',
+                  color: theme.palette.text.primary,
+                  borderRadius: 2,
+                  transition: 'all 0.3s ease',
+                  border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+                }}
+              >
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00f2fe' }}>
+                  Total Income
+                </Typography>
+                <Typography variant="h4" sx={{ 
+                  fontWeight: 'bold', 
+                  color: '#00ff9d',
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' } 
+                }}>
+                  <AnimatedNumber value={summary.totalIncome} />
+                </Typography>
+              </Paper>
+            </Box>
+            <Box sx={{ px: 1 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  background: theme.palette.mode === 'light' 
+                    ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                    : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
+                  color: theme.palette.text.primary,
+                  borderRadius: 2,
+                  transition: 'all 0.3s ease',
+                  border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+                }}
+              >
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#4facfe' }}>
+                  Total Expenses
+                </Typography>
+                <Typography variant="h4" sx={{ 
+                  fontWeight: 'bold', 
+                  color: '#ff6b6b',
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' } 
+                }}>
+                  <AnimatedNumber value={summary.totalExpenses} />
+                </Typography>
+              </Paper>
+            </Box>
+            <Box sx={{ px: 1 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  background: theme.palette.mode === 'light' 
+                    ? 'linear-gradient(135deg, rgba(0, 255, 157, 0.05) 0%, rgba(0, 255, 157, 0.02) 100%)'
+                    : 'linear-gradient(135deg, rgba(0, 255, 157, 0.1) 0%, rgba(0, 255, 157, 0.05) 100%)',
+                  color: theme.palette.text.primary,
+                  borderRadius: 2,
+                  transition: 'all 0.3s ease',
+                  border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+                }}
+              >
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00ff9d' }}>
+                  Balance
+                </Typography>
+                <Typography variant="h4" sx={{ 
+                  fontWeight: 'bold',
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' } 
+                }}>
+                  <AnimatedNumber value={summary.balance} />
+                </Typography>
+              </Paper>
+            </Box>
+          </Slider>
+        ) : (
+        <Grid container width="100%" justifyContent="space-between" rowSpacing={{ xs: 3, md: 0 }}>
+          <Grid item xs={12} md="auto" sx={{ width: { xs: '100%', md: '32%' } }}>
             <motion.div whileHover={{ scale: 1.04, boxShadow: '0 8px 32px rgba(0, 242, 254, 0.18)' }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
               <Paper
                 elevation={0}
@@ -1077,13 +1181,17 @@ function Dashboard() {
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00f2fe' }}>
                   Total Income
                 </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#00ff9d' }}>
+                <Typography variant="h4" sx={{ 
+                  fontWeight: 'bold', 
+                  color: '#00ff9d',
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' } 
+                }}>
                   <AnimatedNumber value={summary.totalIncome} />
                 </Typography>
               </Paper>
             </motion.div>
           </Grid>
-          <Grid item xs={12} md={4} sx={{ width: '32%' }}>
+          <Grid item xs={12} md="auto" sx={{ width: { xs: '100%', md: '32%' } }}>
             <motion.div whileHover={{ scale: 1.04, boxShadow: '0 8px 32px rgba(79, 172, 254, 0.18)' }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
               <Paper
                 elevation={0}
@@ -1108,13 +1216,17 @@ function Dashboard() {
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#4facfe' }}>
                   Total Expenses
                 </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#ff6b6b' }}>
+                <Typography variant="h4" sx={{ 
+                  fontWeight: 'bold', 
+                  color: '#ff6b6b',
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' } 
+                }}>
                   <AnimatedNumber value={summary.totalExpenses} />
                 </Typography>
               </Paper>
             </motion.div>
           </Grid>
-          <Grid item xs={12} md={4} sx={{ width: '32%' }}>
+          <Grid item xs={12} md="auto" sx={{ width: { xs: '100%', md: '32%' } }}>
             <motion.div whileHover={{ scale: 1.04, boxShadow: '0 8px 32px rgba(0, 255, 157, 0.18)' }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
               <Paper
                 elevation={0}
@@ -1139,13 +1251,17 @@ function Dashboard() {
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00ff9d' }}>
                   Balance
                 </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                <Typography variant="h4" sx={{ 
+                  fontWeight: 'bold',
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' } 
+                }}>
                   <AnimatedNumber value={summary.balance} />
                 </Typography>
               </Paper>
             </motion.div>
           </Grid>
         </Grid>
+        )}
 
         <Grid container spacing={0} justifyContent="space-between" sx={{ mt: 3, width: '100%' }}>
           <Grid item xs={12} sx={{ p: 0, m: 0, width: '100%' }}>
@@ -1170,207 +1286,220 @@ function Dashboard() {
                 },
                 m: 0,
                 mb: 3,
+                height: isMobile && isPortrait ? 300 : 'auto',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, width: '100%' }}>
                 <Typography variant="h5" sx={{ fontWeight: 600, color: '#00f2fe', flex: 1, letterSpacing: 1 }}>
                   Total In/Outflow
                 </Typography>
-                <TextField
-                  select
-                  value={viewType}
-                  onChange={e => setViewType(e.target.value)}
-                  size="small"
-                  sx={{ 
-                    minWidth: 120, 
-                    mx: 1,
-                    background: theme.palette.mode === 'light' 
-                      ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
-                      : 'rgba(10,25,41,0.7)',
-                    borderRadius: 2,
-                    border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.3)' : 'rgba(255, 255, 255, 0.2)',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.5)' : 'rgba(255, 255, 255, 0.3)',
-                      },
-                    },
-                    '& .MuiSelect-select': {
-                      color: theme.palette.text.primary,
-                    },
-                  }}
-                  SelectProps={{
-                    MenuProps: {
-                      PaperProps: {
-                        sx: {
-                          background: theme.palette.mode === 'light' 
-                            ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
-                            : 'rgba(10,25,41,0.95)',
-                          backdropFilter: 'blur(10px)',
-                          border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : '1px solid rgba(255, 255, 255, 0.1)',
-                          '& .MuiMenuItem-root': {
-                            color: theme.palette.text.primary,
-                            '&:hover': {
+                {!isMobile && (
+                  <>
+                    <TextField
+                      select
+                      value={viewType}
+                      onChange={e => setViewType(e.target.value)}
+                      size="small"
+                      sx={{ 
+                        minWidth: 120, 
+                        mx: 1,
+                        background: theme.palette.mode === 'light' 
+                          ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                          : 'rgba(10,25,41,0.7)',
+                        borderRadius: 2,
+                        border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.3)' : 'rgba(255, 255, 255, 0.2)',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.5)' : 'rgba(255, 255, 255, 0.3)',
+                          },
+                        },
+                        '& .MuiSelect-select': {
+                          color: theme.palette.text.primary,
+                        },
+                      }}
+                      SelectProps={{
+                        MenuProps: {
+                          PaperProps: {
+                            sx: {
                               background: theme.palette.mode === 'light' 
-                                ? 'rgba(79, 172, 254, 0.1)'
-                                : 'rgba(255, 255, 255, 0.1)',
-                            },
-                            '&.Mui-selected': {
-                              background: theme.palette.mode === 'light' 
-                                ? 'rgba(79, 172, 254, 0.15)'
-                                : 'rgba(255, 255, 255, 0.15)',
-                              '&:hover': {
-                                background: theme.palette.mode === 'light' 
-                                  ? 'rgba(79, 172, 254, 0.2)'
-                                  : 'rgba(255, 255, 255, 0.2)',
+                                ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                                : 'rgba(10,25,41,0.95)',
+                              backdropFilter: 'blur(10px)',
+                              border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : '1px solid rgba(255, 255, 255, 0.1)',
+                              '& .MuiMenuItem-root': {
+                                color: theme.palette.text.primary,
+                                '&:hover': {
+                                  background: theme.palette.mode === 'light' 
+                                    ? 'rgba(79, 172, 254, 0.1)'
+                                    : 'rgba(255, 255, 255, 0.1)',
+                                },
+                                '&.Mui-selected': {
+                                  background: theme.palette.mode === 'light' 
+                                    ? 'rgba(79, 172, 254, 0.15)'
+                                    : 'rgba(255, 255, 255, 0.15)',
+                                  '&:hover': {
+                                    background: theme.palette.mode === 'light' 
+                                      ? 'rgba(79, 172, 254, 0.2)'
+                                      : 'rgba(255, 255, 255, 0.2)',
+                                  },
+                                },
                               },
                             },
                           },
                         },
-                      },
-                    },
-                  }}
-                >
-                  {viewTypeOptions.map(opt => (
-                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                  ))}
-                </TextField>
-                <TextField
-                  select
-                  value={valueMode}
-                  onChange={e => setValueMode(e.target.value)}
-                  size="small"
-                  sx={{ 
-                    minWidth: 120, 
-                    mx: 1,
-                    background: theme.palette.mode === 'light' 
-                      ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
-                      : 'rgba(10,25,41,0.7)',
-                    borderRadius: 2,
-                    border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.3)' : 'rgba(255, 255, 255, 0.2)',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.5)' : 'rgba(255, 255, 255, 0.3)',
-                      },
-                    },
-                    '& .MuiSelect-select': {
-                      color: theme.palette.text.primary,
-                    },
-                  }}
-                  SelectProps={{
-                    MenuProps: {
-                      PaperProps: {
-                        sx: {
-                          background: theme.palette.mode === 'light' 
-                            ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
-                            : 'rgba(10,25,41,0.95)',
-                          backdropFilter: 'blur(10px)',
-                          border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : '1px solid rgba(255, 255, 255, 0.1)',
-                          '& .MuiMenuItem-root': {
-                            color: theme.palette.text.primary,
-                            '&:hover': {
+                      }}
+                    >
+                      {viewTypeOptions.map(opt => (
+                        <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                      ))}
+                    </TextField>
+                    <TextField
+                      select
+                      value={valueMode}
+                      onChange={e => setValueMode(e.target.value)}
+                      size="small"
+                      sx={{ 
+                        minWidth: 120, 
+                        mx: 1,
+                        background: theme.palette.mode === 'light' 
+                          ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                          : 'rgba(10,25,41,0.7)',
+                        borderRadius: 2,
+                        border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.3)' : 'rgba(255, 255, 255, 0.2)',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.5)' : 'rgba(255, 255, 255, 0.3)',
+                          },
+                        },
+                        '& .MuiSelect-select': {
+                          color: theme.palette.text.primary,
+                        },
+                      }}
+                      SelectProps={{
+                        MenuProps: {
+                          PaperProps: {
+                            sx: {
                               background: theme.palette.mode === 'light' 
-                                ? 'rgba(79, 172, 254, 0.1)'
-                                : 'rgba(255, 255, 255, 0.1)',
-                            },
-                            '&.Mui-selected': {
-                              background: theme.palette.mode === 'light' 
-                                ? 'rgba(79, 172, 254, 0.15)'
-                                : 'rgba(255, 255, 255, 0.15)',
-                              '&:hover': {
-                                background: theme.palette.mode === 'light' 
-                                  ? 'rgba(79, 172, 254, 0.2)'
-                                  : 'rgba(255, 255, 255, 0.2)',
+                                ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                                : 'rgba(10,25,41,0.95)',
+                              backdropFilter: 'blur(10px)',
+                              border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : '1px solid rgba(255, 255, 255, 0.1)',
+                              '& .MuiMenuItem-root': {
+                                color: theme.palette.text.primary,
+                                '&:hover': {
+                                  background: theme.palette.mode === 'light' 
+                                    ? 'rgba(79, 172, 254, 0.1)'
+                                    : 'rgba(255, 255, 255, 0.1)',
+                                },
+                                '&.Mui-selected': {
+                                  background: theme.palette.mode === 'light' 
+                                    ? 'rgba(79, 172, 254, 0.15)'
+                                    : 'rgba(255, 255, 255, 0.15)',
+                                  '&:hover': {
+                                    background: theme.palette.mode === 'light' 
+                                      ? 'rgba(79, 172, 254, 0.2)'
+                                      : 'rgba(255, 255, 255, 0.2)',
+                                  },
+                                },
                               },
                             },
                           },
                         },
-                      },
-                    },
-                  }}
-                >
-                  {valueModeOptions.map(opt => (
-                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                  ))}
-                </TextField>
-                <TextField
-                  select
-                  value={range}
-                  onChange={e => setRange(e.target.value)}
-                  size="small"
-                  sx={{ 
-                    minWidth: 160, 
-                    mx: 1,
-                    background: theme.palette.mode === 'light' 
-                      ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
-                      : 'rgba(10,25,41,0.7)',
-                    borderRadius: 2,
-                    border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.3)' : 'rgba(255, 255, 255, 0.2)',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.5)' : 'rgba(255, 255, 255, 0.3)',
-                      },
-                    },
-                    '& .MuiSelect-select': {
-                      color: theme.palette.text.primary,
-                    },
-                  }}
-                  SelectProps={{
-                    MenuProps: {
-                      PaperProps: {
-                        sx: {
-                          background: theme.palette.mode === 'light' 
-                            ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
-                            : 'rgba(10,25,41,0.95)',
-                          backdropFilter: 'blur(10px)',
-                          border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : '1px solid rgba(255, 255, 255, 0.1)',
-                          '& .MuiMenuItem-root': {
-                            color: theme.palette.text.primary,
-                            '&:hover': {
+                      }}
+                    >
+                      {valueModeOptions.map(opt => (
+                        <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                      ))}
+                    </TextField>
+                    <TextField
+                      select
+                      value={range}
+                      onChange={e => setRange(e.target.value)}
+                      size="small"
+                      sx={{ 
+                        minWidth: 160, 
+                        mx: 1,
+                        background: theme.palette.mode === 'light' 
+                          ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                          : 'rgba(10,25,41,0.7)',
+                        borderRadius: 2,
+                        border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.3)' : 'rgba(255, 255, 255, 0.2)',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.5)' : 'rgba(255, 255, 255, 0.3)',
+                          },
+                        },
+                        '& .MuiSelect-select': {
+                          color: theme.palette.text.primary,
+                        },
+                      }}
+                      SelectProps={{
+                        MenuProps: {
+                          PaperProps: {
+                            sx: {
                               background: theme.palette.mode === 'light' 
-                                ? 'rgba(79, 172, 254, 0.1)'
-                                : 'rgba(255, 255, 255, 0.1)',
-                            },
-                            '&.Mui-selected': {
-                              background: theme.palette.mode === 'light' 
-                                ? 'rgba(79, 172, 254, 0.15)'
-                                : 'rgba(255, 255, 255, 0.15)',
-                              '&:hover': {
-                                background: theme.palette.mode === 'light' 
-                                  ? 'rgba(79, 172, 254, 0.2)'
-                                  : 'rgba(255, 255, 255, 0.2)',
+                                ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                                : 'rgba(10,25,41,0.95)',
+                              backdropFilter: 'blur(10px)',
+                              border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : '1px solid rgba(255, 255, 255, 0.1)',
+                              '& .MuiMenuItem-root': {
+                                color: theme.palette.text.primary,
+                                '&:hover': {
+                                  background: theme.palette.mode === 'light' 
+                                    ? 'rgba(79, 172, 254, 0.1)'
+                                    : 'rgba(255, 255, 255, 0.1)',
+                                },
+                                '&.Mui-selected': {
+                                  background: theme.palette.mode === 'light' 
+                                    ? 'rgba(79, 172, 254, 0.15)'
+                                    : 'rgba(255, 255, 255, 0.15)',
+                                  '&:hover': {
+                                    background: theme.palette.mode === 'light' 
+                                      ? 'rgba(79, 172, 254, 0.2)'
+                                      : 'rgba(255, 255, 255, 0.2)',
+                                  },
+                                },
                               },
                             },
                           },
                         },
-                      },
-                    },
-                  }}
-                >
-                  {rangeOptions.map(opt => (
-                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                  ))}
-                </TextField>
+                      }}
+                    >
+                      {rangeOptions.map(opt => (
+                        <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                      ))}
+                    </TextField>
+                  </>
+                )}
               </Box>
-              <Box sx={{width: '100%', px: 0, m: 0 }}>
-                {valueMode === 'default' ? (
+              <Box sx={{width: '100%', px: 0, m: 0, flex: 1 }}>
+                {isMobile && isPortrait ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <Typography variant="body1" sx={{ textAlign: 'center', p: 2 }}>
+                      Please rotate your phone to view the chart
+                    </Typography>
+                  </Box>
+                ) : valueMode === 'default' ? (
                   <Bar
                     data={{
                       labels: lineRangeData.labels,

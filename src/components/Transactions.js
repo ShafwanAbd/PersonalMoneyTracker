@@ -22,6 +22,7 @@ import {
   DialogActions,
   InputAdornment,
   Pagination,
+  useMediaQuery,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
@@ -44,6 +45,8 @@ import { format } from 'date-fns';
 
 function Transactions() {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isPortrait = useMediaQuery('(orientation: portrait)');
   const [transactions, setTransactions] = useState([]);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -503,11 +506,11 @@ function Transactions() {
               },
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, width: '100%' }}>
-              <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, width: '100%', flexWrap: 'wrap', gap: 2 }}>
+              <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main, flexGrow: 1 }}>
                 Add New Transaction
               </Typography>
-              <Box sx={{ display: 'flex', gap: 2, ml: 'auto' }}>
+              <Box sx={{ display: 'flex', gap: 2, ml: isMobile ? 0 : 'auto' }}>
                 <input
                   type="file"
                   accept=".csv"
@@ -521,6 +524,7 @@ function Transactions() {
                     disabled={isImporting}
                     variant="contained"
                     startIcon={<UploadIcon />}
+                    size={isMobile ? 'small' : 'medium'}
                     sx={{
                       background: theme.palette.mode === 'light'
                         ? 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)'
@@ -532,9 +536,11 @@ function Transactions() {
                           : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
                         opacity: 0.9,
                       },
+                      fontSize: isMobile ? '0.75rem' : '0.875rem',
+                      px: isMobile ? 1.5 : 2,
                     }}
                   >
-                    {isImporting ? 'Importing...' : 'Import from CSV'}
+                    {isMobile ? 'Import' : (isImporting ? 'Importing...' : 'Import from CSV')}
                   </Button>
                 </label>
                 <Button
@@ -542,6 +548,7 @@ function Transactions() {
                   disabled={isExporting}
                   variant="contained"
                   startIcon={<DownloadIcon />}
+                  size={isMobile ? 'small' : 'medium'}
                   sx={{
                     background: theme.palette.mode === 'light'
                       ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
@@ -553,9 +560,11 @@ function Transactions() {
                         : 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
                       opacity: 0.9,
                     },
+                    fontSize: isMobile ? '0.75rem' : '0.875rem',
+                    px: isMobile ? 1.5 : 2,
                   }}
                 >
-                  {isExporting ? 'Exporting...' : 'Export to CSV'}
+                  {isMobile ? 'Export' : (isExporting ? 'Exporting...' : 'Export to CSV')}
                 </Button>
               </Box>
             </Box>
@@ -708,168 +717,196 @@ function Transactions() {
           </Paper>
         </motion.div>
 
-        <motion.div whileHover={{ boxShadow: '0 8px 32px rgba(0, 242, 254, 0.18)' }} transition={{ type: 'spring', stiffness: 180, damping: 18 }}>
+        {isMobile && isPortrait ? (
           <Paper
             elevation={0}
             sx={{
               p: 3,
               mt: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
               background: theme.palette.mode === 'light' 
                 ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
                 : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
               color: theme.palette.text.primary,
               borderRadius: 2,
-              transition: 'all 0.3s ease',
               border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
-              '&:hover': {
-                boxShadow: theme.palette.mode === 'light'
-                  ? '0 8px 32px rgba(79, 172, 254, 0.15)'
-                  : '0 8px 32px rgba(79, 172, 254, 0.1)',
-              },
+              minHeight: 200,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
-              <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main, flex: 1 }}>
-                Transaction History
-              </Typography>
-              <Button
-                variant="outlined"
-                color="error"
-                onClick={() => setShowDeleteAllDialog(true)}
-                disabled={transactions.length === 0}
-                sx={{
-                  borderColor: '#ff6b6b',
-                  color: '#ff6b6b',
-                  '&:hover': {
-                    borderColor: '#ff5252',
-                    backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                  },
-                  '&.Mui-disabled': {
-                    borderColor: 'rgba(255, 107, 107, 0.3)',
-                    color: 'rgba(255, 107, 107, 0.3)',
-                  },
-                }}
-              >
-                Delete All Data
-              </Button>
-              <TextField
-                label="Filter"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                size="small"
-                sx={{ minWidth: 200 }}
-              />
-              <TextField
-                select
-                label="Rows"
-                value={rowsPerPage}
-                onChange={(e) => setRowsPerPage(Number(e.target.value))}
-                size="small"
-                sx={{ minWidth: 100 }}
-              >
-                <MenuItem value={5}>5</MenuItem>
-                <MenuItem value={10}>10</MenuItem>
-                <MenuItem value={20}>20</MenuItem>
-                <MenuItem value={50}>50</MenuItem>
-                <MenuItem value={100}>100</MenuItem>
-              </TextField>
-            </Box>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell onClick={() => handleSort('date')} sx={{ cursor: 'pointer' }}>
-                      Date {sortBy === 'date' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-                    </TableCell>
-                    <TableCell onClick={() => handleSort('description')} sx={{ cursor: 'pointer' }}>
-                      Description {sortBy === 'description' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-                    </TableCell>
-                    <TableCell onClick={() => handleSort('category')} sx={{ cursor: 'pointer' }}>
-                      Category {sortBy === 'category' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-                    </TableCell>
-                    <TableCell align="right" onClick={() => handleSort('amount')} sx={{ cursor: 'pointer' }}>
-                      Amount {sortBy === 'amount' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-                    </TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {paginatedTransactions.map((transaction) => {
-                    const numAmount = parseFloat(transaction.amount);
-                    // Expense if amount is negative
-                    const isExpense = numAmount < 0;
-                    const displayAmount = isExpense ? `- ${formatCurrency(Math.abs(numAmount))}` : formatCurrency(numAmount);
-                    return (
-                      <TableRow 
-                        key={transaction._id}
-                        sx={{
-                          '&:hover': {
-                            backgroundColor: 'rgba(0, 242, 254, 0.08)',
-                            transition: 'background-color 0.2s ease',
-                          },
-                          '& td': {
-                            padding: '8px 16px',
-                            height: '40px'
-                          }
-                        }}
-                      >
-                        <TableCell>
-                          {new Date(transaction.date).toLocaleDateString('id-ID', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })}
-                        </TableCell>
-                        <TableCell>{transaction.description}</TableCell>
-                        <TableCell>{transaction.category}</TableCell>
-                        <TableCell align="right">
-                          <Typography
-                            sx={{
-                              color: isExpense ? '#ff6b6b' : '#00ff9d',
-                              fontWeight: 500,
-                            }}
-                          >
-                            {displayAmount}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <IconButton
-                            onClick={() => handleEditClick(transaction)}
-                            sx={{ color: theme.palette.info.main, mr: 1 }}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton
-                            onClick={() => handleDeleteClick(transaction._id)}
-                            sx={{
-                              color: theme.palette.error.main,
-                              '&:hover': {
-                                backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                              },
-                            }}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={(e, value) => setPage(value)}
-                color="primary"
-                shape="rounded"
-                showFirstButton
-                showLastButton
-              />
-            </Box>
+            <Typography variant="h6" sx={{ color: theme.palette.primary.main, textAlign: 'center' }}>
+              Transaction History
+            </Typography>
+            <Typography variant="body1" sx={{ mt: 2, textAlign: 'center' }}>
+              Please rotate your phone to view the transaction history.
+            </Typography>
           </Paper>
-        </motion.div>
+        ) : (
+          <motion.div whileHover={{ boxShadow: '0 8px 32px rgba(0, 242, 254, 0.18)' }} transition={{ type: 'spring', stiffness: 180, damping: 18 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                mt: 3,
+                background: theme.palette.mode === 'light' 
+                  ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                  : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
+                color: theme.palette.text.primary,
+                borderRadius: 2,
+                transition: 'all 0.3s ease',
+                border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+                '&:hover': {
+                  boxShadow: theme.palette.mode === 'light'
+                    ? '0 8px 32px rgba(79, 172, 254, 0.15)'
+                    : '0 8px 32px rgba(79, 172, 254, 0.1)',
+                },
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2, flexWrap: 'wrap' }}>
+                <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main, flex: 1 }}>
+                  Transaction History
+                </Typography>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => setShowDeleteAllDialog(true)}
+                  disabled={transactions.length === 0}
+                  sx={{
+                    borderColor: '#ff6b6b',
+                    color: '#ff6b6b',
+                    '&:hover': {
+                      borderColor: '#ff5252',
+                      backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                    },
+                    '&.Mui-disabled': {
+                      borderColor: 'rgba(255, 107, 107, 0.3)',
+                      color: 'rgba(255, 107, 107, 0.3)',
+                    },
+                  }}
+                >
+                  Delete All Data
+                </Button>
+                <TextField
+                  label="Filter"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  size="small"
+                  sx={{ minWidth: 200 }}
+                />
+                <TextField
+                  select
+                  label="Rows"
+                  value={rowsPerPage}
+                  onChange={(e) => setRowsPerPage(Number(e.target.value))}
+                  size="small"
+                  sx={{ minWidth: 100 }}
+                >
+                  <MenuItem value={5}>5</MenuItem>
+                  <MenuItem value={10}>10</MenuItem>
+                  <MenuItem value={20}>20</MenuItem>
+                  <MenuItem value={50}>50</MenuItem>
+                  <MenuItem value={100}>100</MenuItem>
+                </TextField>
+              </Box>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell onClick={() => handleSort('date')} sx={{ cursor: 'pointer' }}>
+                        Date {sortBy === 'date' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                      </TableCell>
+                      <TableCell onClick={() => handleSort('description')} sx={{ cursor: 'pointer' }}>
+                        Description {sortBy === 'description' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                      </TableCell>
+                      <TableCell onClick={() => handleSort('category')} sx={{ cursor: 'pointer' }}>
+                        Category {sortBy === 'category' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                      </TableCell>
+                      <TableCell align="right" onClick={() => handleSort('amount')} sx={{ cursor: 'pointer' }}>
+                        Amount {sortBy === 'amount' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                      </TableCell>
+                      <TableCell align="right">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {paginatedTransactions.map((transaction) => {
+                      const numAmount = parseFloat(transaction.amount);
+                      // Expense if amount is negative
+                      const isExpense = numAmount < 0;
+                      const displayAmount = isExpense ? `- ${formatCurrency(Math.abs(numAmount))}` : formatCurrency(numAmount);
+                      return (
+                        <TableRow 
+                          key={transaction._id}
+                          sx={{
+                            '&:hover': {
+                              backgroundColor: 'rgba(0, 242, 254, 0.08)',
+                              transition: 'background-color 0.2s ease',
+                            },
+                            '& td': {
+                              padding: '8px 16px',
+                              height: '40px'
+                            }
+                          }}
+                        >
+                          <TableCell>
+                            {new Date(transaction.date).toLocaleDateString('id-ID', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })}
+                          </TableCell>
+                          <TableCell>{transaction.description}</TableCell>
+                          <TableCell>{transaction.category}</TableCell>
+                          <TableCell align="right">
+                            <Typography
+                              sx={{
+                                color: isExpense ? '#ff6b6b' : '#00ff9d',
+                                fontWeight: 500,
+                              }}
+                            >
+                              {displayAmount}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <IconButton
+                              onClick={() => handleEditClick(transaction)}
+                              sx={{ color: theme.palette.info.main, mr: 1 }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                            <IconButton
+                              onClick={() => handleDeleteClick(transaction._id)}
+                              sx={{
+                                color: theme.palette.error.main,
+                                '&:hover': {
+                                  backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                                },
+                              }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={(e, value) => setPage(value)}
+                  color="primary"
+                  shape="rounded"
+                  showFirstButton
+                  showLastButton
+                />
+              </Box>
+            </Paper>
+          </motion.div>
+        )}
 
         <motion.div whileHover={{ scale: 1.02, boxShadow: '0 8px 32px rgba(0, 242, 254, 0.18)' }} transition={{ type: 'spring', stiffness: 180, damping: 18 }}>
           <Dialog 

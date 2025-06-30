@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { ThemeProvider, createTheme, CssBaseline, useMediaQuery } from '@mui/material';
 import { Container, Box } from '@mui/material';
 import Dashboard from './components/Dashboard';
 import Transactions from './components/Transactions';
@@ -89,21 +89,25 @@ function App() {
     setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
   };
 
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   return (
     <Router>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-          <Navbar mode={mode} toggleTheme={toggleTheme} />
+          <Navbar mode={mode} toggleTheme={toggleTheme} isMobile={isMobile} />
           <Box 
             component="main" 
             sx={{ 
               flexGrow: 1, 
               p: 4,
-              mt: '64px', // Height of the AppBar
+              mt: isMobile ? 0 : '64px',
+              mb: isMobile ? '64px' : 0,
               width: '100%',
-              minHeight: 'calc(100vh - 64px)',
-              maxWidth: 'lg',
+              minHeight: `calc(100vh - ${isMobile ? '0px' : '64px'})`,
+              maxWidth: isMobile ? '100vw' : 'lg',
+              overflowX: 'hidden',
               mx: 'auto'
             }}
           >
