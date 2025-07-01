@@ -42,6 +42,10 @@ import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   CheckCircle as CheckCircleIcon,
+  Settings as SettingsIcon,
+  Save as SaveIcon,
+  Close as CloseIcon,
+  ArrowDropDown as ArrowDropDownIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
@@ -107,6 +111,24 @@ const CustomProgressBar = ({ value }) => {
   );
 };
 
+// Add a function to generate a color from a string (category name)
+function getCategoryColor(category, theme) {
+  // Simple hash to color palette (5 colors)
+  const palette = [
+    theme.palette.primary.main,
+    theme.palette.success.main,
+    theme.palette.warning.main,
+    theme.palette.error.main,
+    theme.palette.info.main,
+  ];
+  let hash = 0;
+  for (let i = 0; i < category.length; i++) {
+    hash = category.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const idx = Math.abs(hash) % palette.length;
+  return palette[idx];
+}
+
 const Goals = () => {
   const theme = useTheme();
   const [goals, setGoals] = useState([]);
@@ -133,6 +155,7 @@ const Goals = () => {
     }
   });
 
+  const [goalCategories, setGoalCategories] = useState([]);
   const [transactionCategories, setTransactionCategories] = useState([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [goalToDelete, setGoalToDelete] = useState(null);
@@ -146,12 +169,64 @@ const Goals = () => {
   const [contribFilter, setContribFilter] = useState('');
   const [contribView, setContribView] = useState('default');
 
+  // Category management state
+  const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
+  const [categoryInput, setCategoryInput] = useState('');
+  const [categoryEditIndex, setCategoryEditIndex] = useState(null);
+  const [categoryEditValue, setCategoryEditValue] = useState('');
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [categoryError, setCategoryError] = useState('');
+
   // API base URL
   const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+  const sortOptions = [
+    { value: 'targetAmount', label: 'Highest Target Amount' },
+    { value: 'progress', label: 'Highest Progress (Target/Current)' },
+    { value: 'priority', label: 'Priority' },
+    { value: 'title', label: 'Title (A-Z)' },
+    { value: 'category', label: 'Category (A-Z)' },
+    { value: 'createdAt', label: 'Date Created' },
+  ];
+
+  const [sortBy, setSortBy] = useState('createdAt');
+
+  // Sorting logic
+  const sortedGoals = React.useMemo(() => {
+    let sorted = [...goals];
+    switch (sortBy) {
+      case 'targetAmount':
+        sorted.sort((a, b) => b.targetAmount - a.targetAmount);
+        break;
+      case 'progress':
+        sorted.sort((a, b) => {
+          const aProgress = a.targetAmount > 0 ? a.currentAmount / a.targetAmount : 0;
+          const bProgress = b.targetAmount > 0 ? b.currentAmount / b.targetAmount : 0;
+          return bProgress - aProgress;
+        });
+        break;
+      case 'priority':
+        const priorityOrder = { high: 0, medium: 1, low: 2 };
+        sorted.sort((a, b) => (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3));
+        break;
+      case 'title':
+        sorted.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'category':
+        sorted.sort((a, b) => a.category.localeCompare(b.category));
+        break;
+      case 'createdAt':
+      default:
+        sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        break;
+    }
+    return sorted;
+  }, [goals, sortBy]);
 
   // Load goals from database on component mount
   useEffect(() => {
     fetchGoals();
+    fetchGoalCategories();
     fetchTransactionCategories();
     fetchTransactions();
   }, []);
@@ -175,6 +250,18 @@ const Goals = () => {
       setError('Failed to load goals. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchGoalCategories = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/goal-categories`);
+      if (response.ok) {
+        const categories = await response.json();
+        setGoalCategories(categories);
+      }
+    } catch (error) {
+      console.error('Error fetching goal categories:', error);
     }
   };
 
@@ -213,7 +300,7 @@ const Goals = () => {
         targetAmount: goal.targetAmount?.toString() || '',
         currentAmount: goal.currentAmount?.toString() || '0',
         targetDate: goal.targetDate ? goal.targetDate.split('T')[0] : '',
-        category: goal.category || 'savings',
+        category: goal.category || (goalCategories[0] || ''),
         priority: goal.priority || 'medium',
         autoUpdate: goal.autoUpdate || {
           enabled: false,
@@ -230,7 +317,7 @@ const Goals = () => {
         targetAmount: '',
         currentAmount: '0',
         targetDate: '',
-        category: 'savings',
+        category: goalCategories[0] || '',
         priority: 'medium',
         autoUpdate: {
           enabled: false,
@@ -454,6 +541,73 @@ const Goals = () => {
   // Add debug button in development
   const isDevelopment = process.env.NODE_ENV === 'development';
 
+  // Category management handlers
+  const handleOpenCategoryManager = () => {
+    setCategoryManagerOpen(true);
+    setCategoryInput('');
+    setCategoryEditIndex(null);
+    setCategoryEditValue('');
+    setCategoryError('');
+  };
+  const handleCloseCategoryManager = () => {
+    setCategoryManagerOpen(false);
+    setCategoryInput('');
+    setCategoryEditIndex(null);
+    setCategoryEditValue('');
+    setCategoryError('');
+  };
+  const handleAddCategory = async () => {
+    if (!categoryInput.trim()) return;
+    setCategoryLoading(true);
+    setCategoryError('');
+    try {
+      await axios.post(`${API_BASE_URL}/api/goal-categories`, { name: categoryInput.trim() });
+      await fetchGoalCategories();
+      setCategoryInput('');
+    } catch (err) {
+      setCategoryError(err.response?.data?.message || 'Failed to add category');
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+  const handleEditCategory = (idx, value) => {
+    setCategoryEditIndex(idx);
+    setCategoryEditValue(value);
+    setCategoryError('');
+  };
+  const handleSaveEditCategory = async (oldName) => {
+    if (!categoryEditValue.trim() || oldName === categoryEditValue.trim()) {
+      setCategoryEditIndex(null);
+      setCategoryEditValue('');
+      return;
+    }
+    setCategoryLoading(true);
+    setCategoryError('');
+    try {
+      await axios.put(`${API_BASE_URL}/api/goal-categories/${encodeURIComponent(oldName)}`, { newName: categoryEditValue.trim() });
+      await fetchGoalCategories();
+      setCategoryEditIndex(null);
+      setCategoryEditValue('');
+    } catch (err) {
+      setCategoryError(err.response?.data?.message || 'Failed to edit category');
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+  const handleDeleteCategory = async (name) => {
+    if (!window.confirm(`Delete category "${name}"? This cannot be undone.`)) return;
+    setCategoryLoading(true);
+    setCategoryError('');
+    try {
+      await axios.delete(`${API_BASE_URL}/api/goal-categories/${encodeURIComponent(name)}`);
+      await fetchGoalCategories();
+    } catch (err) {
+      setCategoryError(err.response?.data?.message || 'Failed to delete category');
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ maxWidth: 1200, mx: 'auto', textAlign: 'center', py: 4 }}>
@@ -483,23 +637,45 @@ const Goals = () => {
         <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'rgba(0, 242, 254, 0.9)' }}>
           Financial Goals
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog()}
-          sx={{ 
-            borderRadius: 2,
-            background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.9) 0%, rgba(79, 172, 254, 0.9) 100%)',
-            '&:hover': {
-              background: 'linear-gradient(135deg, rgba(0, 242, 254, 1) 0%, rgba(79, 172, 254, 1) 100%)',
-            }
-          }}
-        >
-          Add Goal
-        </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <FormControl size="small" sx={{ minWidth: 220 }}>
+            <InputLabel>Sort By</InputLabel>
+            <Select
+              value={sortBy}
+              label="Sort By"
+              onChange={e => setSortBy(e.target.value)}
+            >
+              {sortOptions.map(opt => (
+                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenDialog()}
+            sx={{
+              background: theme.palette.mode === 'light'
+                ? 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)'
+                : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+              color: '#fff',
+              fontWeight: 600,
+              borderRadius: 2,
+              px: 2,
+              '&:hover': {
+                background: theme.palette.mode === 'light'
+                  ? 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)'
+                  : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                opacity: 0.9,
+              },
+            }}
+          >
+            Add Goal
+          </Button>
+        </Box>
       </Box>
 
-      {goals.length === 0 ? (
+      {sortedGoals.length === 0 ? (
         <Paper 
           elevation={0}
           sx={{ 
@@ -534,191 +710,205 @@ const Goals = () => {
           </Button>
         </Paper>
       ) : (
-        <Grid container spacing={3}>
-          {goals.map((goal) => (
-            <Grid item xs={12} md={6} lg={4} key={goal._id}>
-              <Card 
-                elevation={0}
-                sx={{
-                  height: '100%',
-                  maxWidth: 350,
-                  mx: 'auto',
-                  position: 'relative',
-                  opacity: goal.completed ? 0.7 : 1,
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer',
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: '1fr 1fr',
+              md: '1fr 1fr 1fr',
+            },
+            gap: 3,
+          }}
+        >
+          {sortedGoals.map((goal) => (
+            <Card
+              key={goal._id}
+              elevation={0}
+              sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                position: 'relative',
+                opacity: goal.completed ? 0.7 : 1,
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                background: theme.palette.mode === 'light'
+                  ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.04) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                  : 'linear-gradient(135deg, rgba(79, 172, 254, 0.07) 0%, rgba(79, 172, 254, 0.03) 100%)',
+                border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.08)' : '1px solid rgba(79, 172, 254, 0.15)',
+                borderRadius: 2,
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: theme.palette.mode === 'light'
+                    ? '0 8px 32px rgba(79, 172, 254, 0.15)'
+                    : '0 8px 32px rgba(0, 242, 254, 0.2)',
                   background: theme.palette.mode === 'light'
-                    ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.04) 0%, rgba(0, 242, 254, 0.02) 100%)'
-                    : 'linear-gradient(135deg, rgba(79, 172, 254, 0.07) 0%, rgba(79, 172, 254, 0.03) 100%)',
-                  border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.08)' : '1px solid rgba(79, 172, 254, 0.15)',
-                  borderRadius: 2,
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: theme.palette.mode === 'light'
-                      ? '0 8px 32px rgba(79, 172, 254, 0.15)'
-                      : '0 8px 32px rgba(0, 242, 254, 0.2)',
-                    background: theme.palette.mode === 'light'
-                      ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.07) 0%, rgba(0, 242, 254, 0.03) 100%)'
-                      : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
-                  },
-                }}
-                onClick={() => handleOpenDetailModal(goal)}
-              >
-                {goal.completed && (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: 8,
-                      right: 8,
-                      zIndex: 1,
-                    }}
-                  >
-                    <CheckCircleIcon color="success" />
-                  </Box>
-                )}
-                <CardContent sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                  {/* Top content: title, chips, description */}
-                  <Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}> 
-                      <Typography variant="h6" component="h3" sx={{ mr: 1, flexGrow: 1, color: 'rgba(0, 242, 254, 0.9)' }}>
-                        {goal.title}
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        {goal.autoUpdate?.enabled && (
-                          <Chip
-                            label="Auto"
-                            size="small"
-                            color="info"
-                            variant="outlined"
-                            sx={{
-                              borderColor: 'rgba(0, 242, 254, 0.4)',
-                              color: 'rgba(0, 242, 254, 0.9)',
-                            }}
-                          />
-                        )}
+                    ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.07) 0%, rgba(0, 242, 254, 0.03) 100%)'
+                    : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
+                },
+              }}
+              onClick={() => handleOpenDetailModal(goal)}
+            >
+              {goal.completed && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    zIndex: 1,
+                  }}
+                >
+                  <CheckCircleIcon color="success" />
+                </Box>
+              )}
+              <CardContent sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                {/* Top content: title, chips, description */}
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}> 
+                    <Typography variant="h6" component="h3" sx={{ mr: 1, flexGrow: 1, color: 'rgba(0, 242, 254, 0.9)' }}>
+                      {goal.title}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      {goal.autoUpdate?.enabled && (
                         <Chip
-                          label={goal.priority}
-                          color={getPriorityColor(goal.priority)}
+                          label="Auto"
                           size="small"
+                          color="info"
+                          variant="outlined"
+                          sx={{
+                            borderColor: 'rgba(0, 242, 254, 0.4)',
+                            color: 'rgba(0, 242, 254, 0.9)',
+                          }}
                         />
-                      </Box>
-                    </Box>
-                    {goal.description && (
-                      <Box sx={{ mb: 2 }}>
-                        <Typography 
-                          variant="body2" 
-                          color="text.secondary" 
-                          sx={{ 
-                            whiteSpace: 'pre-wrap',
-                            lineHeight: 1.4,
-                            maxHeight: goal.description.split('\n').length > 4 ? '7rem' : '5.6rem', // Extra space for ellipsis
-                            overflow: 'hidden',
-                            position: 'relative',
-                          }}
-                        >
-                          {goal.description.split('\n').slice(0, 4).join('\n')}
-                          {goal.description.split('\n').length > 4 && '\n...'}
-                        </Typography>
-                      </Box>
-                    )}
-                    {/* Progress section stays at the top */}
-                    <Box sx={{ mb: 2 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="body2" color="text.secondary">
-                            Progress
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                            {formatCurrency(goal.currentAmount)} / {formatCurrency(goal.targetAmount)}
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <CustomProgressBar value={getProgressPercentage(goal.currentAmount, goal.targetAmount)} />
-                    </Box>
-                  </Box>
-                  {/* Bottom content: date, auto-update, actions, category */}
-                  <Box sx={{ mt: 'auto' }}>
-                    {goal.targetDate && (
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        Target Date: {formatDate(goal.targetDate)}
-                      </Typography>
-                    )}
-                    {goal.autoUpdate?.enabled && (
-                      <Box sx={{ mb: 2 }}>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          Auto-update: {goal.autoUpdate.useAllCategories ? 'All categories' : `${goal.autoUpdate.categories.length} categories`}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Types: {goal.autoUpdate.transactionTypes.join(', ')}
-                        </Typography>
-                      </Box>
-                    )}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Box>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleToggleComplete(goal._id);
-                          }}
-                          color={goal.completed ? 'success' : 'default'}
-                          sx={{
-                            color: goal.completed ? 'success.main' : 'rgba(0, 242, 254, 0.75)',
-                            '&:hover': {
-                              backgroundColor: 'rgba(0, 242, 254, 0.08)',
-                            }
-                          }}
-                        >
-                          <CheckCircleIcon />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenDialog(goal);
-                          }}
-                          sx={{
-                            color: 'rgba(79, 172, 254, 0.75)',
-                            '&:hover': {
-                              backgroundColor: 'rgba(79, 172, 254, 0.08)',
-                            }
-                          }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setGoalToDelete(goal);
-                            setDeleteDialogOpen(true);
-                          }}
-                          color="error"
-                          sx={{
-                            '&:hover': {
-                              backgroundColor: 'rgba(244, 67, 54, 0.08)',
-                            }
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Box>
+                      )}
                       <Chip
-                        label={goal.category}
-                        variant="outlined"
+                        label={goal.priority}
+                        color={getPriorityColor(goal.priority)}
                         size="small"
-                        sx={{
-                          borderColor: 'rgba(79, 172, 254, 0.4)',
-                          color: 'rgba(79, 172, 254, 0.9)',
-                        }}
                       />
                     </Box>
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+                  {goal.description && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary" 
+                        sx={{ 
+                          whiteSpace: 'pre-wrap',
+                          lineHeight: 1.4,
+                          maxHeight: goal.description.split('\n').length > 4 ? '7rem' : '5.6rem', // Extra space for ellipsis
+                          overflow: 'hidden',
+                          position: 'relative',
+                        }}
+                      >
+                        {goal.description.split('\n').slice(0, 4).join('\n')}
+                        {goal.description.split('\n').length > 4 && '\n...'}
+                      </Typography>
+                    </Box>
+                  )}
+                  {/* Progress section stays at the top */}
+                  <Box sx={{ mb: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Progress
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                          {formatCurrency(goal.currentAmount)} / {formatCurrency(goal.targetAmount)}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <CustomProgressBar value={getProgressPercentage(goal.currentAmount, goal.targetAmount)} />
+                  </Box>
+                </Box>
+                {/* Bottom content: date, auto-update, actions, category */}
+                <Box sx={{ mt: 'auto' }}>
+                  {goal.targetDate && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Target Date: {formatDate(goal.targetDate)}
+                    </Typography>
+                  )}
+                  {goal.autoUpdate?.enabled && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        Auto-update: {goal.autoUpdate.useAllCategories ? 'All categories' : `${goal.autoUpdate.categories.length} categories`}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Types: {goal.autoUpdate.transactionTypes.join(', ')}
+                      </Typography>
+                    </Box>
+                  )}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleComplete(goal._id);
+                        }}
+                        color={goal.completed ? 'success' : 'default'}
+                        sx={{
+                          color: goal.completed ? 'success.main' : 'rgba(0, 242, 254, 0.75)',
+                          '&:hover': {
+                            backgroundColor: 'rgba(0, 242, 254, 0.08)',
+                          }
+                        }}
+                      >
+                        <CheckCircleIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenDialog(goal);
+                        }}
+                        sx={{
+                          color: 'rgba(79, 172, 254, 0.75)',
+                          '&:hover': {
+                            backgroundColor: 'rgba(79, 172, 254, 0.08)',
+                          }
+                        }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setGoalToDelete(goal);
+                          setDeleteDialogOpen(true);
+                        }}
+                        color="error"
+                        sx={{
+                          '&:hover': {
+                            backgroundColor: 'rgba(244, 67, 54, 0.08)',
+                          }
+                        }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
+                    <Chip
+                      label={goal.category}
+                      variant="outlined"
+                      size="small"
+                      sx={{
+                        borderColor: getCategoryColor(goal.category, theme),
+                        color: getCategoryColor(goal.category, theme),
+                        background: theme.palette.mode === 'light'
+                          ? 'rgba(0,0,0,0.02)'
+                          : 'rgba(0,0,0,0.18)',
+                        fontWeight: 600,
+                        letterSpacing: 0.2,
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
           ))}
-        </Grid>
+        </Box>
       )}
 
       {/* Add/Edit Goal Dialog */}
@@ -769,9 +959,23 @@ const Goals = () => {
 
             {/* Financial Details Section */}
             <Box>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
-                Financial Details
-              </Typography>
+              <Grid container spacing={2} alignItems="center" sx={{ mb: 1 }}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main', mb: { xs: 1, md: 0 } }}>
+                    Financial Details
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon/>}
+                    onClick={handleOpenCategoryManager}
+                    sx={{ minHeight: 36, py: 1, px: 2 }}
+                  >
+                    Manage Goal Categories
+                  </Button>
+                </Grid>
+              </Grid>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
                   <TextField
@@ -821,13 +1025,11 @@ const Goals = () => {
                       label="Category"
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     >
-                      <MenuItem value="savings">Savings</MenuItem>
-                      <MenuItem value="purchase">Purchase</MenuItem>
-                      <MenuItem value="income">Income Goal</MenuItem>
-                      <MenuItem value="debt">Debt Payoff</MenuItem>
-                      <MenuItem value="investment">Investment</MenuItem>
+                      {goalCategories.map((cat) => (
+                        <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                      ))}
                     </Select>
-                  </FormControl>
+                  </FormControl> 
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <FormControl fullWidth>
@@ -999,6 +1201,246 @@ const Goals = () => {
             sx={{ minWidth: 120 }}
           >
             {editingGoal ? 'Update Goal' : 'Create Goal'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Category Manager Modal */}
+      <Dialog 
+        open={categoryManagerOpen} 
+        onClose={handleCloseCategoryManager}
+        PaperProps={{
+          sx: {
+            background: theme.palette.mode === 'light'
+              ? '#ffffff'
+              : 'rgba(10,25,41,0.7)',
+            backdropFilter: 'blur(10px)',
+            border: theme.palette.mode === 'light' 
+              ? '1px solid rgba(79, 172, 254, 0.2)'
+              : '1px solid rgba(0, 242, 254, 0.1)',
+            boxShadow: theme.palette.mode === 'light'
+              ? '0 8px 32px rgba(79, 172, 254, 0.15)'
+              : '0 8px 32px rgba(0, 242, 254, 0.15)',
+            borderRadius: 2,
+            minWidth: '400px',
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          color: theme.palette.mode === 'light' ? '#1e293b' : '#fff',
+          borderBottom: `1px solid ${theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.2)' : 'rgba(0, 242, 254, 0.1)'}`,
+          pb: 2,
+          fontWeight: 600
+        }}>
+          Manage Goal Categories
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            <TextField
+              fullWidth
+              label="New Category"
+              value={categoryInput}
+              onChange={e => setCategoryInput(e.target.value)}
+              variant="outlined"
+              size="small"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  background: theme.palette.mode === 'light'
+                    ? '#ffffff'
+                    : 'rgba(10,25,41,0.7)',
+                  '& fieldset': {
+                    borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.3)' : 'rgba(0, 242, 254, 0.2)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.5)' : 'rgba(0, 242, 254, 0.4)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: theme.palette.mode === 'light' ? '#4facfe' : '#00f2fe',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: theme.palette.mode === 'light' ? '#334155' : '#94a3b8',
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: theme.palette.mode === 'light' ? '#4facfe' : '#00f2fe',
+                },
+                '& .MuiInputBase-input': {
+                  color: theme.palette.mode === 'light' ? '#1e293b' : '#fff',
+                },
+              }}
+              onKeyDown={e => { if (e.key === 'Enter') handleAddCategory(); }}
+              disabled={categoryLoading}
+            />
+            <Button
+              variant="contained"
+              onClick={handleAddCategory}
+              disabled={!categoryInput.trim()}
+              sx={{
+                background: theme.palette.mode === 'light'
+                  ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+                  : 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
+                color: '#fff',
+                fontWeight: 600,
+                '&:hover': {
+                  background: theme.palette.mode === 'light'
+                    ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+                    : 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
+                  opacity: 0.9,
+                },
+                '&.Mui-disabled': {
+                  background: theme.palette.mode === 'light'
+                    ? 'rgba(79, 172, 254, 0.3)'
+                    : 'rgba(0, 242, 254, 0.3)',
+                  color: theme.palette.mode === 'light'
+                    ? 'rgba(255, 255, 255, 0.7)'
+                    : 'rgba(255, 255, 255, 0.5)',
+                },
+                minWidth: 64
+              }}
+            >
+              Add
+            </Button>
+          </Box>
+          <List>
+            {goalCategories.map((cat) => (
+              <ListItem
+                key={cat}
+                secondaryAction={
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    {categoryEditIndex !== null && goalCategories[categoryEditIndex] === cat ? (
+                      <IconButton 
+                        edge="end" 
+                        onClick={() => handleSaveEditCategory(cat)}
+                        sx={{
+                          color: theme.palette.mode === 'light' ? '#4facfe' : '#00f2fe',
+                          '&:hover': {
+                            backgroundColor: theme.palette.mode === 'light' 
+                              ? 'rgba(79, 172, 254, 0.1)'
+                              : 'rgba(0, 242, 254, 0.1)',
+                          },
+                        }}
+                      >
+                        <SaveIcon />
+                      </IconButton>
+                    ) : (
+                      <IconButton 
+                        edge="end" 
+                        onClick={() => handleEditCategory(goalCategories.indexOf(cat), cat)}
+                        sx={{
+                          color: theme.palette.mode === 'light' ? '#4facfe' : '#00f2fe',
+                          '&:hover': {
+                            backgroundColor: theme.palette.mode === 'light' 
+                              ? 'rgba(79, 172, 254, 0.1)'
+                              : 'rgba(0, 242, 254, 0.1)',
+                          },
+                        }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    )}
+                    <IconButton 
+                      edge="end" 
+                      onClick={() => handleDeleteCategory(cat)}
+                      sx={{
+                        color: theme.palette.mode === 'light' ? '#4facfe' : '#00f2fe',
+                        '&:hover': {
+                          backgroundColor: theme.palette.mode === 'light' 
+                            ? 'rgba(79, 172, 254, 0.1)'
+                            : 'rgba(0, 242, 254, 0.1)',
+                        },
+                      }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
+                }
+                sx={{
+                  border: `1px solid ${theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.2)' : 'rgba(0, 242, 254, 0.1)'}`,
+                  borderRadius: 1,
+                  mb: 1,
+                  background: theme.palette.mode === 'light'
+                    ? '#ffffff'
+                    : 'rgba(10,25,41,0.7)',
+                  '&:hover': {
+                    background: theme.palette.mode === 'light'
+                      ? 'rgba(79, 172, 254, 0.05)'
+                      : 'rgba(0, 242, 254, 0.1)',
+                  },
+                }}
+              >
+                {categoryEditIndex !== null && goalCategories[categoryEditIndex] === cat ? (
+                  <Box sx={{ width: '100%' }}>
+                    <TextField
+                      value={categoryEditValue}
+                      onChange={e => setCategoryEditValue(e.target.value)}
+                      size="small"
+                      autoFocus
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleSaveEditCategory(cat);
+                        if (e.key === 'Escape') { setCategoryEditIndex(null); setCategoryEditValue(''); }
+                      }}
+                      sx={{
+                        flex: 1,
+                        '& .MuiOutlinedInput-root': {
+                          background: theme.palette.mode === 'light'
+                            ? '#ffffff'
+                            : 'rgba(10,25,41,0.7)',
+                          '& fieldset': {
+                            borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.3)' : 'rgba(0, 242, 254, 0.2)',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.5)' : 'rgba(0, 242, 254, 0.4)',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: theme.palette.mode === 'light' ? '#4facfe' : '#00f2fe',
+                          },
+                        },
+                        '& .MuiInputBase-input': {
+                          color: theme.palette.mode === 'light' ? '#1e293b' : '#fff',
+                        },
+                      }}
+                    />
+                    {categoryError && (
+                      <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+                        {categoryError}
+                      </Typography>
+                    )}
+                  </Box>
+                ) : (
+                  <ListItemText 
+                    primary={cat}
+                    primaryTypographyProps={{
+                      color: theme.palette.mode === 'light' ? '#1e293b' : '#fff',
+                      fontWeight: 500,
+                    }}
+                  />
+                )}
+              </ListItem>
+            ))}
+          </List>
+          {categoryError && (
+            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+              {categoryError}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ 
+          borderTop: `1px solid ${theme.palette.mode === 'light' ? 'rgba(79, 172, 254, 0.2)' : 'rgba(0, 242, 254, 0.1)'}`,
+          p: 2
+        }}>
+          <Button 
+            onClick={handleCloseCategoryManager}
+            sx={{
+              color: theme.palette.mode === 'light' ? '#4facfe' : '#00f2fe',
+              fontWeight: 600,
+              '&:hover': {
+                backgroundColor: theme.palette.mode === 'light' 
+                  ? 'rgba(79, 172, 254, 0.1)'
+                  : 'rgba(0, 242, 254, 0.1)',
+              },
+            }}
+          >
+            Close
           </Button>
         </DialogActions>
       </Dialog>
