@@ -526,15 +526,11 @@ function Transactions() {
                     startIcon={<UploadIcon />}
                     size={isMobile ? 'small' : 'medium'}
                     sx={{
-                      background: theme.palette.mode === 'light'
-                        ? 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)'
-                        : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                      background: 'linear-gradient(135deg, rgba(0,242,254,0.7) 0%, rgba(79,172,254,0.7) 100%)',
                       color: '#fff',
                       '&:hover': {
-                        background: theme.palette.mode === 'light'
-                          ? 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)'
-                          : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                        opacity: 0.9,
+                        background: 'linear-gradient(135deg, rgba(0,242,254,0.85) 0%, rgba(79,172,254,0.85) 100%)',
+                        color: '#fff',
                       },
                       fontSize: isMobile ? '0.75rem' : '0.875rem',
                       px: isMobile ? 1.5 : 2,
@@ -550,15 +546,11 @@ function Transactions() {
                   startIcon={<DownloadIcon />}
                   size={isMobile ? 'small' : 'medium'}
                   sx={{
-                    background: theme.palette.mode === 'light'
-                      ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
-                      : 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
+                    background: 'linear-gradient(135deg, rgba(0,242,254,0.7) 0%, rgba(79,172,254,0.7) 100%)',
                     color: '#fff',
                     '&:hover': {
-                      background: theme.palette.mode === 'light'
-                        ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
-                        : 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
-                      opacity: 0.9,
+                      background: 'linear-gradient(135deg, rgba(0,242,254,0.85) 0%, rgba(79,172,254,0.85) 100%)',
+                      color: '#fff',
                     },
                     fontSize: isMobile ? '0.75rem' : '0.875rem',
                     px: isMobile ? 1.5 : 2,
@@ -680,15 +672,11 @@ function Transactions() {
                   fullWidth
                   disabled={amountError || categoryError || !category || !categories.includes(category)}
                   sx={{
-                    background: theme.palette.mode === 'light'
-                      ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
-                      : 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
+                    background: 'linear-gradient(135deg, rgba(0,242,254,0.7) 0%, rgba(79,172,254,0.7) 100%)',
                     color: '#fff',
                     '&:hover': {
-                      background: theme.palette.mode === 'light'
-                        ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
-                        : 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
-                      opacity: 0.9,
+                      background: 'linear-gradient(135deg, rgba(0,242,254,0.85) 0%, rgba(79,172,254,0.85) 100%)',
+                      color: '#fff',
                     },
                   }}
                 >
@@ -977,16 +965,12 @@ function Transactions() {
                   onClick={handleAddCategory}
                   disabled={!newCategory.trim()}
                   sx={{
-                    background: theme.palette.mode === 'light'
-                      ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
-                      : 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
+                    background: 'linear-gradient(135deg, rgba(0,242,254,0.7) 0%, rgba(79,172,254,0.7) 100%)',
                     color: '#fff',
                     fontWeight: 600,
                     '&:hover': {
-                      background: theme.palette.mode === 'light'
-                        ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
-                        : 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
-                      opacity: 0.9,
+                      background: 'linear-gradient(135deg, rgba(0,242,254,0.85) 0%, rgba(79,172,254,0.85) 100%)',
+                      color: '#fff',
                     },
                     '&.Mui-disabled': {
                       background: theme.palette.mode === 'light'

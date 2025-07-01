@@ -1091,7 +1091,13 @@ function Dashboard() {
                 <Typography variant="h4" sx={{
                   fontWeight: 'bold',
                   color: '#00ff9d',
-                  fontSize: { xs: '1.5rem', sm: '2.125rem' }
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' },
+                  zIndex: 1,
+                  background: 'linear-gradient(90deg, #00f2fe 0%, #00ff9d 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  color: 'transparent',
                 }}>
                   <AnimatedNumber value={summary.totalIncome} />
                 </Typography>
@@ -1119,7 +1125,12 @@ function Dashboard() {
                 <Typography variant="h4" sx={{
                   fontWeight: 'bold',
                   color: '#ff6b6b',
-                  fontSize: { xs: '1.5rem', sm: '2.125rem' }
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' },
+                  background: 'linear-gradient(90deg, #ff6b6b 0%, #ff3cac 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  color: 'transparent',
                 }}>
                   <AnimatedNumber value={summary.totalExpenses} />
                 </Typography>
@@ -1146,7 +1157,13 @@ function Dashboard() {
                 </Typography>
                 <Typography variant="h4" sx={{
                   fontWeight: 'bold',
-                  fontSize: { xs: '1.5rem', sm: '2.125rem' }
+                  color: '#4facfe',
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' },
+                  background: 'linear-gradient(90deg, #fff 0%, #e0e0e0 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  color: 'transparent',
                 }}>
                   <AnimatedNumber value={summary.balance} />
                 </Typography>
@@ -1156,7 +1173,7 @@ function Dashboard() {
         ) : (
         <Grid container width="100%" justifyContent="space-between" rowSpacing={{ xs: 3, md: 0 }}>
           <Grid item xs={12} md="auto" sx={{ width: { xs: '100%', md: '32%' } }}>
-            <motion.div whileHover={{ scale: 1.04, boxShadow: '0 8px 32px rgba(0, 242, 254, 0.18)' }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
+            <motion.div whileHover={{ scale: 1.08, boxShadow: '0 0 32px 8px rgba(0, 242, 254, 0.28)' }} transition={{ type: 'spring', stiffness: 200, damping: 18 }} style={{ borderRadius: 16 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -1171,11 +1188,7 @@ function Dashboard() {
                   borderRadius: 2,
                   transition: 'all 0.3s ease',
                   border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
-                  '&:hover': {
-                    boxShadow: theme.palette.mode === 'light'
-                      ? '0 8px 32px rgba(79, 172, 254, 0.15)'
-                      : '0 8px 32px rgba(0, 242, 254, 0.18)',
-                  },
+                  // Removed '&:hover' boxShadow
                 }}
               >
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00f2fe' }}>
@@ -1184,7 +1197,13 @@ function Dashboard() {
                 <Typography variant="h4" sx={{
                   fontWeight: 'bold',
                   color: '#00ff9d',
-                  fontSize: { xs: '1.5rem', sm: '2.125rem' }
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' },
+                  zIndex: 1,
+                  background: 'linear-gradient(90deg, #00f2fe 0%, #00ff9d 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  color: 'transparent',
                 }}>
                   <AnimatedNumber value={summary.totalIncome} />
                 </Typography>
@@ -1192,7 +1211,7 @@ function Dashboard() {
             </motion.div>
           </Grid>
           <Grid item xs={12} md="auto" sx={{ width: { xs: '100%', md: '32%' } }}>
-            <motion.div whileHover={{ scale: 1.04, boxShadow: '0 8px 32px rgba(79, 172, 254, 0.18)' }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
+            <motion.div whileHover={{ scale: 1.08, boxShadow: '0 0 32px 8px rgba(79, 172, 254, 0.28)' }} transition={{ type: 'spring', stiffness: 200, damping: 18 }} style={{ borderRadius: 16 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -1206,11 +1225,7 @@ function Dashboard() {
                   borderRadius: 2,
                   transition: 'all 0.3s ease',
                   border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
-                  '&:hover': {
-                    boxShadow: theme.palette.mode === 'light'
-                      ? '0 8px 32px rgba(79, 172, 254, 0.15)'
-                      : '0 8px 32px rgba(79, 172, 254, 0.1)',
-                  },
+                  // Removed '&:hover' boxShadow
                 }}
               >
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#4facfe' }}>
@@ -1219,7 +1234,12 @@ function Dashboard() {
                 <Typography variant="h4" sx={{
                   fontWeight: 'bold',
                   color: '#ff6b6b',
-                  fontSize: { xs: '1.5rem', sm: '2.125rem' }
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' },
+                  background: 'linear-gradient(90deg, #ff6b6b 0%, #ff3cac 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  color: 'transparent',
                 }}>
                   <AnimatedNumber value={summary.totalExpenses} />
                 </Typography>
@@ -1227,7 +1247,7 @@ function Dashboard() {
             </motion.div>
           </Grid>
           <Grid item xs={12} md="auto" sx={{ width: { xs: '100%', md: '32%' } }}>
-            <motion.div whileHover={{ scale: 1.04, boxShadow: '0 8px 32px rgba(0, 255, 157, 0.18)' }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
+            <motion.div whileHover={{ scale: 1.08, boxShadow: '0 0 32px 8px rgba(0, 255, 157, 0.28)' }} transition={{ type: 'spring', stiffness: 200, damping: 18 }} style={{ borderRadius: 16 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -1241,11 +1261,7 @@ function Dashboard() {
                   borderRadius: 2,
                   transition: 'all 0.3s ease',
                   border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
-                  '&:hover': {
-                    boxShadow: theme.palette.mode === 'light'
-                      ? '0 8px 32px rgba(79, 172, 254, 0.15)'
-                      : '0 8px 32px rgba(0, 255, 157, 0.18)',
-                  },
+                  // Removed '&:hover' boxShadow
                 }}
               >
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00ff9d' }}>
@@ -1253,7 +1269,13 @@ function Dashboard() {
                 </Typography>
                 <Typography variant="h4" sx={{
                   fontWeight: 'bold',
-                  fontSize: { xs: '1.5rem', sm: '2.125rem' }
+                  color: '#4facfe',
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' },
+                  background: 'linear-gradient(90deg, #fff 0%, #e0e0e0 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  color: 'transparent',
                 }}>
                   <AnimatedNumber value={summary.balance} />
                 </Typography>

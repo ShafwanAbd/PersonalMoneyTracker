@@ -655,18 +655,14 @@ const Goals = () => {
             startIcon={<AddIcon />}
             onClick={() => handleOpenDialog()}
             sx={{
-              background: theme.palette.mode === 'light'
-                ? 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)'
-                : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+              background: 'linear-gradient(135deg, rgba(0,242,254,0.7) 0%, rgba(79,172,254,0.7) 100%)',
               color: '#fff',
               fontWeight: 600,
               borderRadius: 2,
               px: 2,
               '&:hover': {
-                background: theme.palette.mode === 'light'
-                  ? 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)'
-                  : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                opacity: 0.9,
+                background: 'linear-gradient(135deg, rgba(0,242,254,0.85) 0%, rgba(79,172,254,0.85) 100%)',
+                color: '#fff',
               },
             }}
           >
@@ -700,9 +696,10 @@ const Goals = () => {
             startIcon={<AddIcon />}
             onClick={() => handleOpenDialog()}
             sx={{
-              background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.9) 0%, rgba(79, 172, 254, 0.9) 100%)',
+              background: 'linear-gradient(135deg, rgba(0,242,254,0.7) 0%, rgba(79,172,254,0.7) 100%)',
               '&:hover': {
-                background: 'linear-gradient(135deg, rgba(0, 242, 254, 1) 0%, rgba(79, 172, 254, 1) 100%)',
+                background: 'linear-gradient(135deg, rgba(0,242,254,0.85) 0%, rgba(79,172,254,0.85) 100%)',
+                color: '#fff',
               }
             }}
           >
@@ -1276,16 +1273,12 @@ const Goals = () => {
               onClick={handleAddCategory}
               disabled={!categoryInput.trim()}
               sx={{
-                background: theme.palette.mode === 'light'
-                  ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
-                  : 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
+                background: 'linear-gradient(135deg, rgba(0,242,254,0.7) 0%, rgba(79,172,254,0.7) 100%)',
                 color: '#fff',
                 fontWeight: 600,
                 '&:hover': {
-                  background: theme.palette.mode === 'light'
-                    ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
-                    : 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
-                  opacity: 0.9,
+                  background: 'linear-gradient(135deg, rgba(0,242,254,0.85) 0%, rgba(79,172,254,0.85) 100%)',
+                  color: '#fff',
                 },
                 '&.Mui-disabled': {
                   background: theme.palette.mode === 'light'
@@ -2017,9 +2010,10 @@ const Goals = () => {
             }} 
             variant="contained"
             sx={{
-              background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.8) 0%, rgba(79, 172, 254, 0.8) 100%)',
+              background: 'linear-gradient(135deg, rgba(0,242,254,0.7) 0%, rgba(79,172,254,0.7) 100%)',
               '&:hover': {
-                background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.9) 0%, rgba(79, 172, 254, 0.9) 100%)',
+                background: 'linear-gradient(135deg, rgba(0,242,254,0.85) 0%, rgba(79,172,254,0.85) 100%)',
+                color: '#fff',
               }
             }}
           >
