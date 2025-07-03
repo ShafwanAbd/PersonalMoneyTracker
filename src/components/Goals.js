@@ -33,6 +33,8 @@ import {
   TableBody,
   TableRow,
   TableCell,
+  Checkbox,
+  ListItemIcon,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -605,6 +607,156 @@ const Goals = () => {
       setCategoryError(err.response?.data?.message || 'Failed to delete category');
     } finally {
       setCategoryLoading(false);
+    }
+  };
+
+  const [addContribModalOpen, setAddContribModalOpen] = useState(false);
+  const [eligibleTransactions, setEligibleTransactions] = useState([]);
+  const [selectedTxIds, setSelectedTxIds] = useState([]);
+
+  // Helper to get eligible transactions for manual add
+  const getEligibleTransactions = () => {
+    if (!selectedGoal || !transactions) return [];
+    const alreadyContributingIds = new Set((selectedGoal.contributingTransactions || []).map(tx => tx._id));
+    const afterCreated = transactions.filter(tx => new Date(tx.date) >= new Date(selectedGoal.createdAt));
+    return afterCreated.filter(tx => !alreadyContributingIds.has(tx._id));
+  };
+
+  // State for Manage Contributing Transactions modal table
+  const [manageFilter, setManageFilter] = useState('');
+  const [manageRowsPerPage, setManageRowsPerPage] = useState(10);
+  const [managePage, setManagePage] = useState(1);
+  const [manageSortBy, setManageSortBy] = useState('date');
+  const [manageSortDirection, setManageSortDirection] = useState('desc');
+  const [manageView, setManageView] = useState('default');
+
+  // Derived rows for modal table
+  const getManageTableRows = () => {
+    let filtered = eligibleTransactions;
+    // Filter
+    if (manageFilter.trim()) {
+      const search = manageFilter.toLowerCase();
+      filtered = filtered.filter(tx =>
+        tx.category.toLowerCase().includes(search) ||
+        (tx.description || '').toLowerCase().includes(search) ||
+        tx.type.toLowerCase().includes(search)
+      );
+    }
+    // Sort
+    filtered = [...filtered].sort((a, b) => {
+      let aValue = a[manageSortBy];
+      let bValue = b[manageSortBy];
+      if (manageSortBy === 'amount') {
+        aValue = parseFloat(aValue);
+        bValue = parseFloat(bValue);
+      }
+      if (manageSortBy === 'date') {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      }
+      if (aValue < bValue) return manageSortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return manageSortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+    // Simple view: group and sum by category and type
+    let tableRows = filtered;
+    if (manageView === 'simple') {
+      const grouped = {};
+      filtered.forEach(tx => {
+        const key = tx.category + '|' + tx.type;
+        if (!grouped[key]) {
+          grouped[key] = {
+            category: tx.category,
+            type: tx.type,
+            amount: 0
+          };
+        }
+        grouped[key].amount += parseFloat(tx.amount);
+      });
+      tableRows = Object.values(grouped);
+      // Sort simple view
+      tableRows = [...tableRows].sort((a, b) => {
+        let aValue = a[manageSortBy];
+        let bValue = b[manageSortBy];
+        if (manageSortBy === 'amount') {
+          aValue = parseFloat(aValue);
+          bValue = parseFloat(bValue);
+        }
+        if (aValue < bValue) return manageSortDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return manageSortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return tableRows;
+  };
+  const manageTableRows = getManageTableRows();
+  const manageTotalPages = Math.ceil(manageTableRows.length / manageRowsPerPage) || 1;
+  const pagedManageRows = manageTableRows.slice((managePage - 1) * manageRowsPerPage, managePage * manageRowsPerPage);
+
+  // Reset modal table state when opening
+  const handleOpenAddContribModal = () => {
+    if (!selectedGoal || !transactions) return;
+    const auto = selectedGoal.autoUpdate || {};
+    let filtered = transactions;
+    if (auto.transactionTypes && auto.transactionTypes.length > 0) {
+      filtered = filtered.filter(tx => auto.transactionTypes.includes(tx.type));
+    }
+    if (!auto.useAllCategories && auto.categories && auto.categories.length > 0) {
+      filtered = filtered.filter(tx => auto.categories.includes(tx.category));
+    }
+    setEligibleTransactions(filtered);
+    setSelectedTxIds((selectedGoal.manualContributingTransactionIds && selectedGoal.manualContributingTransactionIds.length > 0)
+      ? selectedGoal.manualContributingTransactionIds
+      : (selectedGoal.contributingTransactions || []).map(tx => tx._id)
+    );
+    setManageFilter('');
+    setManageRowsPerPage(10);
+    setManagePage(1);
+    setManageSortBy('date');
+    setManageSortDirection('desc');
+    setManageView('default');
+    setAddContribModalOpen(true);
+  };
+  const handleCloseAddContribModal = () => {
+    setAddContribModalOpen(false);
+    setSelectedTxIds([]);
+  };
+  const handleToggleTx = (txId) => {
+    setSelectedTxIds(prev => prev.includes(txId) ? prev.filter(id => id !== txId) : [...prev, txId]);
+  };
+  const handleAddContribTransactions = async () => {
+    if (!selectedGoal) return;
+    try {
+      await fetch(`${API_BASE_URL}/api/goals/${selectedGoal._id}/contributing-transactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionIds: selectedTxIds }),
+      });
+      await fetchGoals();
+      // Refresh selectedGoal details
+      const updated = goals.find(g => g._id === selectedGoal._id);
+      setSelectedGoal(updated);
+      showSnackbar('Contributing transactions updated!');
+      handleCloseAddContribModal();
+    } catch (error) {
+      showSnackbar('Failed to update contributing transactions. Please try again.', 'error');
+    }
+  };
+
+  // Remove a transaction from manual contributing list
+  const handleRemoveContribTransaction = async (txId) => {
+    if (!selectedGoal) return;
+    try {
+      await fetch(`${API_BASE_URL}/api/goals/${selectedGoal._id}/contributing-transactions/${txId}`, {
+        method: 'DELETE',
+      });
+      await fetchGoals();
+      // Refresh selectedGoal details
+      const updated = goals.find(g => g._id === selectedGoal._id);
+      setSelectedGoal(updated);
+      showSnackbar('Transaction removed from goal!');
+    } catch (error) {
+      showSnackbar('Failed to remove transaction. Please try again.', 'error');
     }
   };
 
@@ -1653,6 +1805,15 @@ const Goals = () => {
                           <MenuItem value="default">Default</MenuItem>
                           <MenuItem value="simple">Simple</MenuItem>
                         </TextField>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={handleOpenAddContribModal}
+                          disabled={!selectedGoal}
+                          sx={{ ml: 'auto' }}
+                        >
+                          Manage
+                        </Button>
                       </Box>
                       <Box>
                         {(() => {
@@ -1662,14 +1823,8 @@ const Goals = () => {
                           const useAllCategories = auto.useAllCategories;
                           const allowedCategories = auto.categories || [];
                           const allowedTypes = auto.transactionTypes || [];
-                          let filtered = transactions.filter(tx => {
-                            // Type match
-                            if (allowedTypes.length && !allowedTypes.includes(tx.type)) return false;
-                            // Category match
-                            if (!useAllCategories && allowedCategories.length && !allowedCategories.includes(tx.category)) return false;
-                            // Only count positive for income, negative for expense
-                            if (tx.type === 'income' && parseFloat(tx.amount) <= 0) return false;
-                            if (tx.type === 'expense' && parseFloat(tx.amount) >= 0) return false;
+                          const contribTxs = selectedGoal?.contributingTransactions || [];
+                          let filtered = contribTxs.filter(tx => {
                             // Filter by search
                             const search = contribFilter.toLowerCase();
                             if (
@@ -2051,6 +2206,165 @@ const Goals = () => {
           >
             Delete
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add Contributing Transactions Modal */}
+      <Dialog open={addContribModalOpen} onClose={handleCloseAddContribModal} maxWidth="md" fullWidth>
+        <DialogTitle>Manage Contributing Transactions</DialogTitle>
+        <DialogContent dividers>
+          {eligibleTransactions.length === 0 ? (
+            <Typography>No transactions found.</Typography>
+          ) : (
+            <>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <TextField
+                  label="Filter"
+                  value={manageFilter}
+                  onChange={e => { setManageFilter(e.target.value); setManagePage(1); }}
+                  size="small"
+                  sx={{ minWidth: 180 }}
+                />
+                <TextField
+                  select
+                  label="Rows"
+                  value={manageRowsPerPage}
+                  onChange={e => { setManageRowsPerPage(Number(e.target.value)); setManagePage(1); }}
+                  size="small"
+                  sx={{ minWidth: 90 }}
+                >
+                  <MenuItem value={5}>5</MenuItem>
+                  <MenuItem value={10}>10</MenuItem>
+                  <MenuItem value={20}>20</MenuItem>
+                  <MenuItem value={50}>50</MenuItem>
+                </TextField>
+                <TextField
+                  select
+                  label="View"
+                  value={manageView}
+                  onChange={e => setManageView(e.target.value)}
+                  size="small"
+                  sx={{ minWidth: 120 }}
+                >
+                  <MenuItem value="default">Default</MenuItem>
+                  <MenuItem value="simple">Simple</MenuItem>
+                </TextField>
+              </Box>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      {/* Remove Checkbox column */}
+                      {manageView === 'default' && <TableCell onClick={() => {
+                        setManageSortBy('date');
+                        setManageSortDirection(manageSortBy === 'date' && manageSortDirection === 'asc' ? 'desc' : 'asc');
+                      }} sx={{ cursor: 'pointer' }}>
+                        Date {manageSortBy === 'date' ? (manageSortDirection === 'asc' ? '▲' : '▼') : ''}
+                      </TableCell>}
+                      {manageView === 'default' && <TableCell onClick={() => {
+                        setManageSortBy('description');
+                        setManageSortDirection(manageSortBy === 'description' && manageSortDirection === 'asc' ? 'desc' : 'asc');
+                      }} sx={{ cursor: 'pointer' }}>
+                        Description {manageSortBy === 'description' ? (manageSortDirection === 'asc' ? '▲' : '▼') : ''}
+                      </TableCell>}
+                      <TableCell onClick={() => {
+                        setManageSortBy('category');
+                        setManageSortDirection(manageSortBy === 'category' && manageSortDirection === 'asc' ? 'desc' : 'asc');
+                      }} sx={{ cursor: 'pointer' }}>
+                        Category {manageSortBy === 'category' ? (manageSortDirection === 'asc' ? '▲' : '▼') : ''}
+                      </TableCell>
+                      <TableCell onClick={() => {
+                        setManageSortBy('type');
+                        setManageSortDirection(manageSortBy === 'type' && manageSortDirection === 'asc' ? 'desc' : 'asc');
+                      }} sx={{ cursor: 'pointer' }}>
+                        Type {manageSortBy === 'type' ? (manageSortDirection === 'asc' ? '▲' : '▼') : ''}
+                      </TableCell>
+                      <TableCell onClick={() => {
+                        setManageSortBy('amount');
+                        setManageSortDirection(manageSortBy === 'amount' && manageSortDirection === 'asc' ? 'desc' : 'asc');
+                      }} align="right" sx={{ cursor: 'pointer' }}>
+                        Amount {manageSortBy === 'amount' ? (manageSortDirection === 'asc' ? '▲' : '▼') : ''}
+                      </TableCell>
+                      {manageView === 'simple' && (
+                        <TableCell align="right">% of Progress</TableCell>
+                      )}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {pagedManageRows.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={manageView === 'default' ? 5 : 4} align="center">
+                          No transactions found.
+                        </TableCell>
+                      </TableRow>
+                    ) : manageView === 'default' ? (
+                      pagedManageRows.map((tx) => (
+                        <TableRow
+                          key={tx._id}
+                          hover
+                          onClick={() => handleToggleTx(tx._id)}
+                          sx={{
+                            cursor: 'pointer',
+                            backgroundColor: selectedTxIds.includes(tx._id)
+                              ? (theme.palette.mode === 'light' ? 'rgba(0,242,254,0.18)' : 'rgba(0,242,254,0.32)')
+                              : undefined,
+                            transition: 'background 0.2s',
+                            '&:hover': {
+                              backgroundColor: selectedTxIds.includes(tx._id)
+                                ? `${theme.palette.mode === 'light' ? 'rgba(0,200,220,0.32)' : 'rgba(0,200,220,0.48)'} !important`
+                                : `${theme.palette.mode === 'light' ? 'rgba(0,242,254,0.08)' : 'rgba(0,242,254,0.16)'} !important`,
+                            },
+                          }}
+                        >
+                          <TableCell>{new Date(tx.date).toLocaleDateString('id-ID')}</TableCell>
+                          <TableCell>{tx.description}</TableCell>
+                          <TableCell>{tx.category}</TableCell>
+                          <TableCell>{tx.type}</TableCell>
+                          <TableCell align="right" style={{ color: tx.type === 'income' ? '#00ff9d' : '#ff6b6b', fontWeight: 500 }}>
+                            {formatCurrency(Math.abs(tx.amount))}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      pagedManageRows.map((row) => (
+                        <TableRow key={row.category + '|' + row.type} hover>
+                          <TableCell />
+                          <TableCell>{row.category}</TableCell>
+                          <TableCell>{row.type}</TableCell>
+                          <TableCell align="right" style={{ fontWeight: 500 }}>
+                            {formatCurrency(Math.abs(row.amount))}
+                          </TableCell>
+                          <TableCell align="right">
+                            {(() => {
+                              // Calculate percentage of progress
+                              const total = Math.abs(selectedGoal.currentAmount);
+                              if (!total) return '0%';
+                              return ((Math.abs(row.amount) / total) * 100).toFixed(1) + '%';
+                            })()}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <Pagination
+                  count={manageTotalPages}
+                  page={managePage}
+                  onChange={(e, value) => setManagePage(value)}
+                  color="primary"
+                  shape="rounded"
+                  showFirstButton
+                  showLastButton
+                />
+              </Box>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseAddContribModal}>Cancel</Button>
+          <Button onClick={handleAddContribTransactions} variant="contained">Save</Button>
         </DialogActions>
       </Dialog>
     </Box>

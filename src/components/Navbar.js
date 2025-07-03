@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AppBar, Toolbar, Typography, Button, Box, IconButton, useTheme, useMediaQuery } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
@@ -9,6 +9,25 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 
 function Navbar({ mode, toggleTheme, isMobile }) {
   const theme = useTheme();
+  const [visible, setVisible] = useState(true);
+  const lastScrollY = useRef(window.scrollY);
+
+  useEffect(() => {
+    if (isMobile) return; // Don't hide on mobile
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY < 10) {
+        setVisible(true);
+      } else if (currentScrollY > lastScrollY.current) {
+        setVisible(false); // Scrolling down
+      } else {
+        setVisible(true); // Scrolling up
+      }
+      lastScrollY.current = currentScrollY;
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isMobile]);
 
   return (
     <AppBar 
@@ -19,7 +38,9 @@ function Navbar({ mode, toggleTheme, isMobile }) {
         bottom: isMobile ? 0 : 'auto',
         height: '64px',
         display: 'flex',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
+        transform: !isMobile && !visible ? 'translateY(-100%)' : 'translateY(0)',
       }}
     >
       <Toolbar>
@@ -35,9 +56,10 @@ function Navbar({ mode, toggleTheme, isMobile }) {
         <Box sx={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: isMobile ? 1 : 2, 
+            gap: 0, 
             flexGrow: 1,
-            justifyContent: isMobile ? 'space-evenly' : 'flex-end' 
+            justifyContent: isMobile ? 'space-evenly' : 'flex-end',
+            height: '100%'
         }}>
           {isMobile ? (
             <>
@@ -57,7 +79,7 @@ function Navbar({ mode, toggleTheme, isMobile }) {
                 color="inherit"
                 component={RouterLink}
                 to="/"
-                startIcon={<AccountBalanceWalletIcon />}
+                sx={{ height: '100%', minWidth: '120px' }}
               >
                 Dashboard
               </Button>
@@ -65,7 +87,7 @@ function Navbar({ mode, toggleTheme, isMobile }) {
                 color="inherit"
                 component={RouterLink}
                 to="/transactions"
-                startIcon={<ReceiptIcon />}
+                sx={{ height: '100%', minWidth: '120px' }}
               >
                 Transactions
               </Button>
@@ -73,7 +95,7 @@ function Navbar({ mode, toggleTheme, isMobile }) {
                 color="inherit"
                 component={RouterLink}
                 to="/goals"
-                startIcon={<FlagIcon />}
+                sx={{ height: '100%', minWidth: '120px' }}
               >
                 Goals
               </Button>

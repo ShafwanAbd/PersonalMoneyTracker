@@ -1173,7 +1173,7 @@ function Dashboard() {
         ) : (
         <Grid container width="100%" justifyContent="space-between" rowSpacing={{ xs: 3, md: 0 }}>
           <Grid item xs={12} md="auto" sx={{ width: { xs: '100%', md: '32%' } }}>
-            <motion.div whileHover={{ scale: 1.08, boxShadow: '0 0 32px 8px rgba(0, 242, 254, 0.28)' }} transition={{ type: 'spring', stiffness: 200, damping: 18 }} style={{ borderRadius: 16 }}>
+            <motion.div whileHover={{ scale: 1.08, boxShadow: '0 0 32px 8px rgba(0, 242, 254, 0.28)' }} transition={{ type: 'spring', stiffness: 200, damping: 18 }} style={{ borderRadius: 16, cursor: 'default' }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -1211,7 +1211,7 @@ function Dashboard() {
             </motion.div>
           </Grid>
           <Grid item xs={12} md="auto" sx={{ width: { xs: '100%', md: '32%' } }}>
-            <motion.div whileHover={{ scale: 1.08, boxShadow: '0 0 32px 8px rgba(79, 172, 254, 0.28)' }} transition={{ type: 'spring', stiffness: 200, damping: 18 }} style={{ borderRadius: 16 }}>
+            <motion.div whileHover={{ scale: 1.08, boxShadow: '0 0 32px 8px rgba(79, 172, 254, 0.28)' }} transition={{ type: 'spring', stiffness: 200, damping: 18 }} style={{ borderRadius: 16, cursor: 'default' }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -1247,7 +1247,7 @@ function Dashboard() {
             </motion.div>
           </Grid>
           <Grid item xs={12} md="auto" sx={{ width: { xs: '100%', md: '32%' } }}>
-            <motion.div whileHover={{ scale: 1.08, boxShadow: '0 0 32px 8px rgba(0, 255, 157, 0.28)' }} transition={{ type: 'spring', stiffness: 200, damping: 18 }} style={{ borderRadius: 16 }}>
+            <motion.div whileHover={{ scale: 1.08, boxShadow: '0 0 32px 8px rgba(0, 255, 157, 0.28)' }} transition={{ type: 'spring', stiffness: 200, damping: 18 }} style={{ borderRadius: 16, cursor: 'default' }}>
               <Paper
                 elevation={0}
                 sx={{
