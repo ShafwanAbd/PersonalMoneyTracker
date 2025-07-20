@@ -612,7 +612,9 @@ const Goals = () => {
 
   const [addContribModalOpen, setAddContribModalOpen] = useState(false);
   const [eligibleTransactions, setEligibleTransactions] = useState([]);
-  const [selectedTxIds, setSelectedTxIds] = useState([]);
+  // For merged manual/auto logic
+  const [selectedTxIds, setSelectedTxIds] = useState([]); // manual add
+  const [removedTxIds, setRemovedTxIds] = useState([]); // manual remove
 
   // Helper to get eligible transactions for manual add
   const getEligibleTransactions = () => {
@@ -705,10 +707,10 @@ const Goals = () => {
       filtered = filtered.filter(tx => auto.categories.includes(tx.category));
     }
     setEligibleTransactions(filtered);
-    setSelectedTxIds((selectedGoal.manualContributingTransactionIds && selectedGoal.manualContributingTransactionIds.length > 0)
-      ? selectedGoal.manualContributingTransactionIds
-      : (selectedGoal.contributingTransactions || []).map(tx => tx._id)
-    );
+    // Ensure all contributing transactions are selected
+    const contributingIds = (selectedGoal.contributingTransactions || []).map(tx => tx._id.toString());
+    setSelectedTxIds(contributingIds);
+    setRemovedTxIds(selectedGoal.manualRemovedTransactionIds || []);
     setManageFilter('');
     setManageRowsPerPage(10);
     setManagePage(1);
@@ -720,9 +722,28 @@ const Goals = () => {
   const handleCloseAddContribModal = () => {
     setAddContribModalOpen(false);
     setSelectedTxIds([]);
+    setRemovedTxIds([]);
   };
+  // Toggle logic for merged manual/auto
   const handleToggleTx = (txId) => {
-    setSelectedTxIds(prev => prev.includes(txId) ? prev.filter(id => id !== txId) : [...prev, txId]);
+    // If currently selected (i.e., will be included), remove (add to removedTxIds)
+    if ([...selectedTxIds, ...eligibleTransactions.filter(tx => {
+      // auto-matched
+      const auto = selectedGoal.autoUpdate || {};
+      let match = true;
+      if (auto.transactionTypes && auto.transactionTypes.length > 0 && !auto.transactionTypes.includes(tx.type)) match = false;
+      if (!auto.useAllCategories && auto.categories && auto.categories.length > 0 && !auto.categories.includes(tx.category)) match = false;
+      if (new Date(tx.date) < new Date(selectedGoal.createdAt)) match = false;
+      if (tx._id !== txId) match = false;
+      return match;
+    }).map(tx => tx._id)].includes(txId) && !removedTxIds.includes(txId)) {
+      setRemovedTxIds(prev => [...prev, txId]);
+      setSelectedTxIds(prev => prev.filter(id => id !== txId));
+    } else {
+      // Otherwise, add to manual add and remove from removed
+      setSelectedTxIds(prev => prev.includes(txId) ? prev : [...prev, txId]);
+      setRemovedTxIds(prev => prev.filter(id => id !== txId));
+    }
   };
   const handleAddContribTransactions = async () => {
     if (!selectedGoal) return;
@@ -730,12 +751,17 @@ const Goals = () => {
       await fetch(`${API_BASE_URL}/api/goals/${selectedGoal._id}/contributing-transactions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transactionIds: selectedTxIds }),
+        body: JSON.stringify({
+          manualContributingTransactionIds: selectedTxIds,
+          manualRemovedTransactionIds: removedTxIds
+        }),
       });
       await fetchGoals();
-      // Refresh selectedGoal details
-      const updated = goals.find(g => g._id === selectedGoal._id);
-      setSelectedGoal(updated);
+      // Fetch the latest goal data from backend
+      const res = await fetch(`${API_BASE_URL}/api/goals/${selectedGoal._id}`);
+      if (!res.ok) throw new Error('Failed to fetch updated goal');
+      const freshGoal = await res.json();
+      setSelectedGoal(freshGoal);
       showSnackbar('Contributing transactions updated!');
       handleCloseAddContribModal();
     } catch (error) {
@@ -754,10 +780,29 @@ const Goals = () => {
       // Refresh selectedGoal details
       const updated = goals.find(g => g._id === selectedGoal._id);
       setSelectedGoal(updated);
-      showSnackbar('Transaction removed from goal!');
+      showSnackbar('Transaction manually removed from goal!');
     } catch (error) {
       showSnackbar('Failed to remove transaction. Please try again.', 'error');
     }
+  };
+
+  // Add above the return statement in the Goals component
+  const handleSimpleRowClick = (category, type) => {
+    // Find all eligible transaction IDs with the same category and type
+    const matchingIds = eligibleTransactions
+      .filter(tx => tx.category === category && tx.type === type)
+      .map(tx => tx._id);
+    // Check if all are already selected
+    const allSelected = matchingIds.every(id => selectedTxIds.includes(id));
+    setSelectedTxIds(prev => {
+      if (allSelected) {
+        // Deselect all
+        return prev.filter(id => !matchingIds.includes(id));
+      } else {
+        // Select all (add any not already selected)
+        return [...prev, ...matchingIds.filter(id => !prev.includes(id))];
+      }
+    });
   };
 
   if (loading) {
@@ -812,9 +857,13 @@ const Goals = () => {
               fontWeight: 600,
               borderRadius: 2,
               px: 2,
+              boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+              transition: 'all 0.22s cubic-bezier(0.4,0,0.2,1)',
               '&:hover': {
-                background: 'linear-gradient(135deg, rgba(0,242,254,0.85) 0%, rgba(79,172,254,0.85) 100%)',
+                background: 'linear-gradient(135deg, rgba(0,200,220,0.85) 0%, rgba(79,172,254,0.85) 100%)',
                 color: '#fff',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.13)',
+                transform: 'scale(1.02) translateY(-1px)',
               },
             }}
           >
@@ -880,7 +929,7 @@ const Goals = () => {
                 flexDirection: 'column',
                 position: 'relative',
                 opacity: goal.completed ? 0.7 : 1,
-                transition: 'all 0.3s ease',
+                transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)',
                 cursor: 'pointer',
                 background: theme.palette.mode === 'light'
                   ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.04) 0%, rgba(0, 242, 254, 0.02) 100%)'
@@ -888,10 +937,10 @@ const Goals = () => {
                 border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.08)' : '1px solid rgba(79, 172, 254, 0.15)',
                 borderRadius: 2,
                 '&:hover': {
-                  transform: 'translateY(-4px)',
+                  transform: 'scale(1.01) translateY(-2px)',
                   boxShadow: theme.palette.mode === 'light'
-                    ? '0 8px 32px rgba(79, 172, 254, 0.15)'
-                    : '0 8px 32px rgba(0, 242, 254, 0.2)',
+                    ? '0 4px 24px rgba(79, 172, 254, 0.13)'
+                    : '0 4px 24px rgba(0, 242, 254, 0.16)',
                   background: theme.palette.mode === 'light'
                     ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.07) 0%, rgba(0, 242, 254, 0.03) 100%)'
                     : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
@@ -999,8 +1048,11 @@ const Goals = () => {
                         color={goal.completed ? 'success' : 'default'}
                         sx={{
                           color: goal.completed ? 'success.main' : 'rgba(0, 242, 254, 0.75)',
+                          transition: 'all 0.18s cubic-bezier(0.4,0,0.2,1)',
                           '&:hover': {
-                            backgroundColor: 'rgba(0, 242, 254, 0.08)',
+                            backgroundColor: 'rgba(0, 242, 254, 0.10)',
+                            transform: 'scale(1.12)',
+                            boxShadow: '0 2px 8px rgba(0,242,254,0.10)',
                           }
                         }}
                       >
@@ -1506,10 +1558,13 @@ const Goals = () => {
                   background: theme.palette.mode === 'light'
                     ? '#ffffff'
                     : 'rgba(10,25,41,0.7)',
+                  transition: 'all 0.18s cubic-bezier(0.4,0,0.2,1)',
                   '&:hover': {
                     background: theme.palette.mode === 'light'
-                      ? 'rgba(79, 172, 254, 0.05)'
-                      : 'rgba(0, 242, 254, 0.1)',
+                      ? 'rgba(79, 172, 254, 0.07)'
+                      : 'rgba(0, 242, 254, 0.13)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    transform: 'scale(1.01)',
                   },
                 }}
               >
@@ -1779,7 +1834,7 @@ const Goals = () => {
                           value={contribFilter}
                           onChange={e => { setContribFilter(e.target.value); setContribPage(1); }}
                           size="small"
-                          sx={{ minWidth: 180 }}
+                          sx={{ minWidth: 180, ml: 'auto' }}
                         />
                         <TextField
                           select
@@ -1810,7 +1865,7 @@ const Goals = () => {
                           size="small"
                           onClick={handleOpenAddContribModal}
                           disabled={!selectedGoal}
-                          sx={{ ml: 'auto' }}
+                          sx={{ minHeight: '40px', borderRadius: '8px', px: 2 }}
                         >
                           Manage
                         </Button>
@@ -1952,9 +2007,9 @@ const Goals = () => {
                                           <TableCell align="right">
                                             {(() => {
                                               // Calculate percentage of progress
-                                              const total = Math.abs(selectedGoal.currentAmount);
-                                              if (!total) return '0%';
-                                              return ((Math.abs(tx.amount) / total) * 100).toFixed(1) + '%';
+                                              const simpleTotal = selectedGoal ? Math.abs(selectedGoal.currentAmount) : 0;
+                                              if (!simpleTotal) return '0%';
+                                              return ((Math.abs(tx.amount) / simpleTotal) * 100).toFixed(1) + '%';
                                             })()}
                                           </TableCell>
                                         )}
@@ -2223,7 +2278,7 @@ const Goals = () => {
                   value={manageFilter}
                   onChange={e => { setManageFilter(e.target.value); setManagePage(1); }}
                   size="small"
-                  sx={{ minWidth: 180 }}
+                  sx={{ minWidth: 180, ml: 'auto' }}
                 />
                 <TextField
                   select
@@ -2291,13 +2346,50 @@ const Goals = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {pagedManageRows.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={manageView === 'default' ? 5 : 4} align="center">
-                          No transactions found.
-                        </TableCell>
-                      </TableRow>
-                    ) : manageView === 'default' ? (
+                    {manageView === 'simple' ? (
+                      pagedManageRows.map((row) => {
+                        // For highlight: check if all matching transactions are selected
+                        const matchingIds = eligibleTransactions
+                          .filter(tx => tx.category === row.category && tx.type === row.type)
+                          .map(tx => tx._id);
+                        const allSelected = matchingIds.length > 0 && matchingIds.every(id => selectedTxIds.includes(id));
+                        return (
+                          <TableRow
+                            key={row.category + '|' + row.type}
+                            hover
+                            onClick={() => handleSimpleRowClick(row.category, row.type)}
+                            sx={{
+                              cursor: 'pointer',
+                              backgroundColor: allSelected
+                                ? (theme.palette.mode === 'light' ? 'rgba(0,242,254,0.18)' : 'rgba(0,242,254,0.32)')
+                                : undefined,
+                              transition: 'background 0.2s, transform 0.18s cubic-bezier(0.4,0,0.2,1)',
+                              '&:hover': {
+                                backgroundColor: allSelected
+                                  ? `${theme.palette.mode === 'light' ? 'rgba(0,200,220,0.32)' : 'rgba(0,200,220,0.48)'} !important`
+                                  : `${theme.palette.mode === 'light' ? 'rgba(0,242,254,0.10)' : 'rgba(0,242,254,0.18)'} !important`,
+                                transform: 'scale(1.01)',
+                                boxShadow: '0 2px 8px rgba(0,242,254,0.08)',
+                              },
+                            }}
+                          >
+                            <TableCell>{row.category}</TableCell>
+                            <TableCell>{row.type}</TableCell>
+                            <TableCell align="right" style={{ fontWeight: 500 }}>
+                              {formatCurrency(Math.abs(row.amount))}
+                            </TableCell>
+                            <TableCell align="right">
+                              {(() => {
+                                // Calculate percentage of progress
+                                const simpleTotal = selectedGoal ? Math.abs(selectedGoal.currentAmount) : 0;
+                                if (!simpleTotal) return '0%';
+                                return ((Math.abs(row.amount) / simpleTotal) * 100).toFixed(1) + '%';
+                              })()}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    ) : (
                       pagedManageRows.map((tx) => (
                         <TableRow
                           key={tx._id}
@@ -2308,11 +2400,13 @@ const Goals = () => {
                             backgroundColor: selectedTxIds.includes(tx._id)
                               ? (theme.palette.mode === 'light' ? 'rgba(0,242,254,0.18)' : 'rgba(0,242,254,0.32)')
                               : undefined,
-                            transition: 'background 0.2s',
+                            transition: 'background 0.2s, transform 0.18s cubic-bezier(0.4,0,0.2,1)',
                             '&:hover': {
                               backgroundColor: selectedTxIds.includes(tx._id)
                                 ? `${theme.palette.mode === 'light' ? 'rgba(0,200,220,0.32)' : 'rgba(0,200,220,0.48)'} !important`
-                                : `${theme.palette.mode === 'light' ? 'rgba(0,242,254,0.08)' : 'rgba(0,242,254,0.16)'} !important`,
+                                : `${theme.palette.mode === 'light' ? 'rgba(0,242,254,0.10)' : 'rgba(0,242,254,0.18)'} !important`,
+                              transform: 'scale(1.01)',
+                              boxShadow: '0 2px 8px rgba(0,242,254,0.08)',
                             },
                           }}
                         >
@@ -2322,25 +2416,6 @@ const Goals = () => {
                           <TableCell>{tx.type}</TableCell>
                           <TableCell align="right" style={{ color: tx.type === 'income' ? '#00ff9d' : '#ff6b6b', fontWeight: 500 }}>
                             {formatCurrency(Math.abs(tx.amount))}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      pagedManageRows.map((row) => (
-                        <TableRow key={row.category + '|' + row.type} hover>
-                          <TableCell />
-                          <TableCell>{row.category}</TableCell>
-                          <TableCell>{row.type}</TableCell>
-                          <TableCell align="right" style={{ fontWeight: 500 }}>
-                            {formatCurrency(Math.abs(row.amount))}
-                          </TableCell>
-                          <TableCell align="right">
-                            {(() => {
-                              // Calculate percentage of progress
-                              const total = Math.abs(selectedGoal.currentAmount);
-                              if (!total) return '0%';
-                              return ((Math.abs(row.amount) / total) * 100).toFixed(1) + '%';
-                            })()}
                           </TableCell>
                         </TableRow>
                       ))

@@ -485,27 +485,21 @@ function Transactions() {
   return (
     <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: 'easeOut' }}>
       <Box sx={{ p: 3, minHeight: '100vh' }}>
-        <motion.div whileHover={{ scale: 1.02, boxShadow: '0 8px 32px rgba(0, 242, 254, 0.18)' }} transition={{ type: 'spring', stiffness: 180, damping: 18 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              display: 'flex',
-              flexDirection: 'column',
-              background: theme.palette.mode === 'light' 
-                ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
-                : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
-              color: theme.palette.text.primary,
-              borderRadius: 2,
-              transition: 'all 0.3s ease',
-              border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
-              '&:hover': {
-                boxShadow: theme.palette.mode === 'light'
-                  ? '0 8px 32px rgba(79, 172, 254, 0.15)'
-                  : '0 8px 32px rgba(79, 172, 254, 0.1)',
-              },
-            }}
-          >
+        <Paper
+          elevation={0}
+          sx={{
+            p: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            background: theme.palette.mode === 'light' 
+              ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+              : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
+            color: theme.palette.text.primary,
+            borderRadius: 2,
+            transition: 'all 0.3s ease',
+            border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+          }}
+        >
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, width: '100%', flexWrap: 'wrap', gap: 2 }}>
               <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main, flexGrow: 1 }}>
                 Add New Transaction
@@ -703,7 +697,6 @@ function Transactions() {
               </Box>
             </Box>
           </Paper>
-        </motion.div>
 
         {isMobile && isPortrait ? (
           <Paper
@@ -732,26 +725,20 @@ function Transactions() {
             </Typography>
           </Paper>
         ) : (
-          <motion.div whileHover={{ boxShadow: '0 8px 32px rgba(0, 242, 254, 0.18)' }} transition={{ type: 'spring', stiffness: 180, damping: 18 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                mt: 3,
-                background: theme.palette.mode === 'light' 
-                  ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
-                  : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
-                color: theme.palette.text.primary,
-                borderRadius: 2,
-                transition: 'all 0.3s ease',
-                border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
-                '&:hover': {
-                  boxShadow: theme.palette.mode === 'light'
-                    ? '0 8px 32px rgba(79, 172, 254, 0.15)'
-                    : '0 8px 32px rgba(79, 172, 254, 0.1)',
-                },
-              }}
-            >
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              mt: 3,
+              background: theme.palette.mode === 'light' 
+                ? 'linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.02) 100%)'
+                : 'linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(79, 172, 254, 0.05) 100%)',
+              color: theme.palette.text.primary,
+              borderRadius: 2,
+              transition: 'all 0.3s ease',
+              border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
+            }}
+          >
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2, flexWrap: 'wrap' }}>
                 <Typography variant="h6" gutterBottom sx={{ color: theme.palette.primary.main, flex: 1 }}>
                   Transaction History
@@ -893,7 +880,6 @@ function Transactions() {
                 />
               </Box>
             </Paper>
-          </motion.div>
         )}
 
         <motion.div whileHover={{ scale: 1.02, boxShadow: '0 8px 32px rgba(0, 242, 254, 0.18)' }} transition={{ type: 'spring', stiffness: 180, damping: 18 }}>
