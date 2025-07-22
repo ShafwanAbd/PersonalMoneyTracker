@@ -101,7 +101,7 @@ function App() {
             component="main" 
             sx={{ 
               flexGrow: 1, 
-              p: 4,
+              p: 1,
               mt: isMobile ? 0 : '64px',
               mb: isMobile ? '64px' : 0,
               width: '100%',

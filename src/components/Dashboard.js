@@ -81,6 +81,11 @@ function AnimatedNumber({ value, duration = 2500, prefix = 'Rp ' }) {
 
 function Dashboard() {
   const theme = useTheme();
+
+  // Color palettes for charts
+  const incomeColors = ['#00f2fe', '#4facfe', '#00ff9d', '#28c7b7', '#50e3c2', '#00d4ff'];
+  const expenseColors = ['#ff6b6b', '#d93b3b', '#c94c4c', '#ff3cac', '#ff8787', '#a70000'];
+
   const [summary, setSummary] = useState({
     totalIncome: 0,
     totalExpenses: 0,
@@ -120,6 +125,11 @@ function Dashboard() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isPortrait = useMediaQuery('(orientation: portrait)');
 
+  // Add at the top of Dashboard()
+  const [incomeHover, setIncomeHover] = useState(false);
+  const [expensesHover, setExpensesHover] = useState(false);
+  const [balanceHover, setBalanceHover] = useState(false);
+
   // Save chart options to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('dashboard-range', range);
@@ -149,6 +159,7 @@ function Dashboard() {
   const valueModeOptions = [
     { value: 'default', label: 'Column Bar' },
     { value: 'sum', label: 'Line Graph' },
+    { value: 'stackedArea', label: 'Stacked Area' },
   ];
 
   useEffect(() => {
@@ -199,7 +210,7 @@ function Dashboard() {
         label: 'Income',
         data: getValueArray(rangeData.map(d => d.income)),
         borderColor: '#00f2fe',
-        backgroundColor: 'rgba(0, 242, 254, 0.8)',
+        backgroundColor: 'rgba(0, 242, 254, 0.4)',
         tension: 0.4,
         fill: false,
         pointRadius: 3,
@@ -207,8 +218,8 @@ function Dashboard() {
       {
         label: 'Expenses',
         data: getValueArray(rangeData.map(d => d.expenses)),
-        borderColor: '#ff6b6b',
-        backgroundColor: 'rgba(255, 107, 107, 0.8)',
+        borderColor: '#d93b3b',
+        backgroundColor: 'rgba(255, 107, 107, 0.6)',
         tension: 0.4,
         fill: false,
         pointRadius: 3,
@@ -221,6 +232,7 @@ function Dashboard() {
         tension: 0.4,
         fill: false,
         pointRadius: 3,
+        hidden: true,
       },
     ] : (() => {
       // Collect all unique categories across all data points
@@ -237,11 +249,12 @@ function Dashboard() {
 
       // Add income category lines
       incomeCategories.forEach((category, index) => {
+        const color = incomeColors[index % incomeColors.length];
         datasets.push({
           label: `Income - ${category}`,
           data: getValueArray(rangeData.map(d => d.incomeBreakdown?.[category] || 0)),
-          borderColor: `hsl(${index * 30}, 100%, 50%)`,
-          backgroundColor: `hsla(${index * 30}, 100%, 50%, 0.8)`,
+          borderColor: color,
+          backgroundColor: `${color}B3`, // 70% opacity
           tension: 0.4,
           fill: false,
           pointRadius: 3,
@@ -250,11 +263,12 @@ function Dashboard() {
 
       // Add expense category lines
       expenseCategories.forEach((category, index) => {
+        const color = expenseColors[index % expenseColors.length];
         datasets.push({
           label: `Expense - ${category}`,
           data: getValueArray(rangeData.map(d => d.expenseBreakdown?.[category] || 0)),
-          borderColor: `hsl(${index * 30 + 180}, 100%, 50%)`,
-          backgroundColor: `hsla(${index * 30 + 180}, 100%, 50%, 0.8)`,
+          borderColor: color,
+          backgroundColor: `${color}B3`, // 70% opacity
           tension: 0.4,
           fill: false,
           pointRadius: 3,
@@ -715,6 +729,15 @@ function Dashboard() {
           const percentage = ((value / total) * 100).toFixed(1);
           return percentage + '%';
         },
+        display: function(context) {
+          // Hide label only for the hovered segment
+          const chart = context.chart;
+          const active = chart.getActiveElements && chart.getActiveElements();
+          if (active && active.length > 0) {
+            return active[0].index !== context.dataIndex;
+          }
+          return true;
+        },
         textAlign: 'center',
         textBaseline: 'middle',
       }
@@ -725,11 +748,12 @@ function Dashboard() {
   // Income by Category options
   const incomeDoughnutOptions = {
     ...doughnutOptions,
+    hoverOffset: 40,
     plugins: {
       ...doughnutOptions.plugins,
       tooltip: {
         enabled: false,
-        external: incomeTooltip
+        external: incomeTooltip,
       }
     }
   };
@@ -737,6 +761,7 @@ function Dashboard() {
   // Expenses by Category options
   const expenseDoughnutOptions = {
     ...doughnutOptions,
+    hoverOffset: 40,
     plugins: {
       ...doughnutOptions.plugins,
       tooltip: {
@@ -749,6 +774,7 @@ function Dashboard() {
   // Income vs Expenses Overview options
   const overviewDoughnutOptions = {
     ...doughnutOptions,
+    hoverOffset: 40,
     plugins: {
       ...doughnutOptions.plugins,
       tooltip: {
@@ -798,15 +824,8 @@ function Dashboard() {
         },
       },
       tooltip: {
-        callbacks: {
-          label: function(context) {
-            const label = context.label || '';
-            const value = context.raw || 0;
-            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-            const percentage = ((value / total) * 100).toFixed(1);
-            return `${label}: ${formatCurrency(value)} (${percentage}%)`;
-          }
-        }
+        enabled: false,
+        external: customLineTooltip
       },
       datalabels: {
         color: theme.palette.mode === 'light' ? '#ffffff' : '#1a1a1a',
@@ -821,8 +840,6 @@ function Dashboard() {
           const percentage = ((value / total) * 100).toFixed(1);
           return percentage + '%';
         },
-        textAlign: 'center',
-        textBaseline: 'middle',
       }
     },
     cutout: '70%',
@@ -1063,9 +1080,117 @@ function Dashboard() {
     arrows: false,
   };
 
+  // Data for stacked area chart (Income and Expenses, abs values, supports simple and complex mode)
+  let stackedAreaData;
+  if (viewType === 'simple') {
+    stackedAreaData = {
+      labels: lineRangeData.labels,
+      datasets: [
+        {
+          label: 'Income',
+          data: getValueArray(rangeData.map(d => Math.abs(d.income))),
+          backgroundColor: theme.palette.mode === 'light' ? 'rgba(0, 242, 254, 0.25)' : 'rgba(0, 242, 254, 0.35)',
+          borderColor: '#00f2fe',
+          fill: true,
+          tension: 0.4,
+          stack: 'stack1',
+          pointRadius: 2,
+        },
+        {
+          label: 'Expenses',
+          data: getValueArray(rangeData.map(d => Math.abs(d.expenses))),
+          backgroundColor: theme.palette.mode === 'light' ? 'rgba(255, 107, 107, 0.3)' : 'rgba(217, 59, 59, 0.4)',
+          borderColor: '#d93b3b',
+          fill: true,
+          tension: 0.4,
+          stack: 'stack1',
+          pointRadius: 2,
+        },
+      ],
+    };
+  } else {
+    // Complex mode: stack all income and expense categories (abs values)
+    // Collect all unique categories across all data points
+    const incomeCategoriesSet = new Set();
+    const expenseCategoriesSet = new Set();
+    rangeData.forEach(d => {
+      Object.keys(d.incomeBreakdown || {}).forEach(cat => incomeCategoriesSet.add(cat));
+      Object.keys(d.expenseBreakdown || {}).forEach(cat => expenseCategoriesSet.add(cat));
+    });
+    const incomeCategories = Array.from(incomeCategoriesSet);
+    const expenseCategories = Array.from(expenseCategoriesSet);
+    stackedAreaData = {
+      labels: lineRangeData.labels,
+      datasets: [
+        ...incomeCategories.map((category, index) => ({
+          label: `Income - ${category}`,
+          data: getValueArray(rangeData.map(d => Math.abs(d.incomeBreakdown?.[category] || 0))),
+          backgroundColor: `${incomeColors[index % incomeColors.length]}40`, // 25% opacity
+          borderColor: incomeColors[index % incomeColors.length],
+          fill: true,
+          tension: 0.4,
+          stack: 'stack1',
+          pointRadius: 2,
+        })),
+        ...expenseCategories.map((category, index) => ({
+          label: `Expense - ${category}`,
+          data: getValueArray(rangeData.map(d => Math.abs(d.expenseBreakdown?.[category] || 0))),
+          backgroundColor: `${expenseColors[index % expenseColors.length]}40`, // 25% opacity
+          borderColor: expenseColors[index % expenseColors.length],
+          fill: true,
+          tension: 0.4,
+          stack: 'stack1',
+          pointRadius: 2,
+        })),
+      ],
+    };
+  }
+
+  const stackedAreaOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: {
+          color: theme.palette.text.primary,
+          font: { size: 14, family: theme.typography.fontFamily },
+        },
+      },
+      tooltip: {
+        enabled: false,
+        external: customLineTooltip
+      },
+      datalabels: {
+        display: false,
+      },
+    },
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
+    scales: {
+      x: {
+        stacked: true,
+        ticks: { color: theme.palette.text.primary },
+        grid: { color: 'rgba(255,255,255,0.05)' },
+      },
+      y: {
+        stacked: true,
+        ticks: {
+          color: theme.palette.text.primary,
+          callback: function(value) {
+            return value.toLocaleString('id-ID');
+          }
+        },
+        grid: { color: 'rgba(255,255,255,0.05)' },
+      },
+    },
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: 'easeOut' }}>
-      <Box sx={{ m: 0, p: 3, minHeight: '100vh' }}>
+      <Box sx={{ m: 0, p: 3, minHeight: '100vh', mt: 0 }}>
         {isMobile ? (
           <Slider {...sliderSettings}>
             <Box sx={{ px: 1 }}>
@@ -1084,21 +1209,26 @@ function Dashboard() {
                   transition: 'all 0.3s ease',
                   border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
                 }}
+                onMouseEnter={() => setIncomeHover(true)}
+                onMouseLeave={() => setIncomeHover(false)}
               >
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00f2fe' }}>
                   Total Income
                 </Typography>
-                <Typography variant="h4" sx={{
-                  fontWeight: 'bold',
-                  color: '#00ff9d',
-                  fontSize: { xs: '1.5rem', sm: '2.125rem' },
-                  zIndex: 1,
-                  background: 'linear-gradient(90deg, #00f2fe 0%, #00ff9d 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  color: 'transparent',
-                }}>
+                <Typography
+                  variant="h4"
+                  className={incomeHover ? 'animated-gradient-income' : ''}
+                  sx={{
+                    fontWeight: 'bold',
+                    fontSize: { xs: '1.5rem', sm: '2.125rem' },
+                    zIndex: 1,
+                    background: !incomeHover ? 'linear-gradient(90deg, #00f2fe 0%, #00ff9d 100%)' : undefined,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    color: 'transparent',
+                  }}
+                >
                   <AnimatedNumber value={summary.totalIncome} />
                 </Typography>
               </Paper>
@@ -1118,20 +1248,26 @@ function Dashboard() {
                   transition: 'all 0.3s ease',
                   border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
                 }}
+                onMouseEnter={() => setExpensesHover(true)}
+                onMouseLeave={() => setExpensesHover(false)}
               >
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#4facfe' }}>
                   Total Expenses
                 </Typography>
-                <Typography variant="h4" sx={{
-                  fontWeight: 'bold',
-                  color: '#ff6b6b',
-                  fontSize: { xs: '1.5rem', sm: '2.125rem' },
-                  background: 'linear-gradient(90deg, #ff6b6b 0%, #ff3cac 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  color: 'transparent',
-                }}>
+                <Typography
+                  variant="h4"
+                  className={expensesHover ? 'animated-gradient-expenses' : ''}
+                  sx={{
+                    fontWeight: 'bold',
+                    fontSize: { xs: '1.5rem', sm: '2.125rem' },
+                    zIndex: 1,
+                    background: !expensesHover ? 'linear-gradient(90deg, #ff6b6b 0%, #ff3cac 100%)' : undefined,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    color: 'transparent',
+                  }}
+                >
                   <AnimatedNumber value={summary.totalExpenses} />
                 </Typography>
               </Paper>
@@ -1151,27 +1287,33 @@ function Dashboard() {
                   transition: 'all 0.3s ease',
                   border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
                 }}
+                onMouseEnter={() => setBalanceHover(true)}
+                onMouseLeave={() => setBalanceHover(false)}
               >
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00ff9d' }}>
                   Balance
                 </Typography>
-                <Typography variant="h4" sx={{
-                  fontWeight: 'bold',
-                  color: '#4facfe',
-                  fontSize: { xs: '1.5rem', sm: '2.125rem' },
-                  background: 'linear-gradient(90deg, #fff 0%, #e0e0e0 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  color: 'transparent',
-                }}>
+                <Typography
+                  variant="h4"
+                  className={balanceHover ? 'animated-gradient-balance' : ''}
+                  sx={{
+                    fontWeight: 'bold',
+                    fontSize: { xs: '1.5rem', sm: '2.125rem' },
+                    zIndex: 1,
+                    background: !balanceHover ? 'linear-gradient(90deg, #fff 0%, #e0e0e0 100%)' : undefined,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    color: 'transparent',
+                  }}
+                >
                   <AnimatedNumber value={summary.balance} />
                 </Typography>
               </Paper>
             </Box>
           </Slider>
         ) : (
-        <Grid container width="100%" justifyContent="space-between" rowSpacing={{ xs: 3, md: 0 }}>
+        <Grid container width="100%" justifyContent="space-between" rowSpacing={{ xs: 3, md: 0 }} sx={{ mt: 0 }}>
           <Grid item xs={12} md="auto" sx={{ width: { xs: '100%', md: '32%' } }}>
             <Paper
               elevation={0}
@@ -1189,21 +1331,26 @@ function Dashboard() {
                 border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
                 // Removed '&:hover' boxShadow
               }}
+              onMouseEnter={() => setIncomeHover(true)}
+              onMouseLeave={() => setIncomeHover(false)}
             >
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00f2fe' }}>
                 Total Income
               </Typography>
-              <Typography variant="h4" sx={{
-                fontWeight: 'bold',
-                color: '#00ff9d',
-                fontSize: { xs: '1.5rem', sm: '2.125rem' },
-                zIndex: 1,
-                background: 'linear-gradient(90deg, #00f2fe 0%, #00ff9d 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                color: 'transparent',
-              }}>
+              <Typography
+                variant="h4"
+                className={incomeHover ? 'animated-gradient-income' : ''}
+                sx={{
+                  fontWeight: 'bold',
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' },
+                  zIndex: 1,
+                  background: !incomeHover ? 'linear-gradient(90deg, #00f2fe 0%, #00ff9d 100%)' : undefined,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  color: 'transparent', 
+                }}
+              >
                 <AnimatedNumber value={summary.totalIncome} />
               </Typography>
             </Paper>
@@ -1224,20 +1371,26 @@ function Dashboard() {
                 border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
                 // Removed '&:hover' boxShadow
               }}
+              onMouseEnter={() => setExpensesHover(true)}
+              onMouseLeave={() => setExpensesHover(false)}
             >
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#4facfe' }}>
                 Total Expenses
               </Typography>
-              <Typography variant="h4" sx={{
-                fontWeight: 'bold',
-                color: '#ff6b6b',
-                fontSize: { xs: '1.5rem', sm: '2.125rem' },
-                background: 'linear-gradient(90deg, #ff6b6b 0%, #ff3cac 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                color: 'transparent',
-              }}>
+              <Typography
+                variant="h4"
+                className={expensesHover ? 'animated-gradient-expenses' : ''}
+                sx={{
+                  fontWeight: 'bold',
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' },
+                  zIndex: 1,
+                  background: !expensesHover ? 'linear-gradient(90deg, #ff6b6b 0%, #ff3cac 100%)' : undefined,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                }}
+              >
                 <AnimatedNumber value={summary.totalExpenses} />
               </Typography>
             </Paper>
@@ -1258,20 +1411,26 @@ function Dashboard() {
                 border: theme.palette.mode === 'light' ? '1px solid rgba(79, 172, 254, 0.1)' : 'none',
                 // Removed '&:hover' boxShadow
               }}
+              onMouseEnter={() => setBalanceHover(true)}
+              onMouseLeave={() => setBalanceHover(false)}
             >
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, color: '#00ff9d' }}>
                 Balance
               </Typography>
-              <Typography variant="h4" sx={{
-                fontWeight: 'bold',
-                color: '#4facfe',
-                fontSize: { xs: '1.5rem', sm: '2.125rem' },
-                background: 'linear-gradient(90deg, #fff 0%, #e0e0e0 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                color: 'transparent',
-              }}>
+              <Typography
+                variant="h4"
+                className={balanceHover ? 'animated-gradient-balance' : ''}
+                sx={{
+                  fontWeight: 'bold',
+                  fontSize: { xs: '1.5rem', sm: '2.125rem' },
+                  zIndex: 1,
+                  background: !balanceHover ? 'linear-gradient(90deg, #fff 0%, #e0e0e0 100%)' : undefined,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                }}
+              >
                 <AnimatedNumber value={summary.balance} />
               </Typography>
             </Paper>
@@ -1509,6 +1668,7 @@ function Dashboard() {
                   </Box>
                 ) : valueMode === 'default' ? (
                   <Bar
+                    key={`bar-${range}-${viewType}`}
                     data={{
                       labels: lineRangeData.labels,
                       datasets: lineRangeData.datasets.map((dataset, index) => {
@@ -1524,6 +1684,7 @@ function Dashboard() {
                             pointHoverRadius: 4,
                             tension: 0.4,
                             yAxisID: 'y',
+                            hidden: true,
                           };
                         }
                         // Keep income and expenses as bars
@@ -1572,9 +1733,89 @@ function Dashboard() {
                     }}
                     plugins={[barHoverPlugin]}
                   />
+                ) : valueMode === 'stackedArea' ? (
+                  <Line
+                    key={`stacked-area-${range}-${viewType}`}
+                    data={stackedAreaData}
+                    options={stackedAreaOptions}
+                    height={545}
+                    plugins={[verticalLinePlugin]}
+                  />
                 ) : (
                   <Line
-                    data={lineRangeData}
+                    key={`line-graph-${range}-${viewType}`}
+                    data={{
+                      labels: lineRangeData.labels,
+                      datasets: viewType === 'simple' ? [
+                        {
+                          label: 'Income',
+                          data: getValueArray(rangeData.map(d => d.income)),
+                          borderColor: '#00f2fe',
+                          backgroundColor: 'rgba(0, 242, 254, 0.1)',
+                          tension: 0.4,
+                          fill: true,
+                        },
+                        {
+                          label: 'Expenses',
+                          data: getValueArray(rangeData.map(d => d.expenses)),
+                          borderColor: '#d93b3b',
+                          backgroundColor: 'rgba(217, 59, 59, 0.15)',
+                          tension: 0.4,
+                          fill: true,
+                        },
+                        {
+                          label: 'Balance',
+                          data: getValueArray(rangeData.map(d => d.balance), true),
+                          borderColor: '#4facfe',
+                          backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                          tension: 0.4,
+                          fill: true,
+                        },
+                      ] : (() => {
+                        // Complex mode: all categories
+                        const incomeCategoriesSet = new Set();
+                        const expenseCategoriesSet = new Set();
+                        rangeData.forEach(d => {
+                          Object.keys(d.incomeBreakdown || {}).forEach(cat => incomeCategoriesSet.add(cat));
+                          Object.keys(d.expenseBreakdown || {}).forEach(cat => expenseCategoriesSet.add(cat));
+                        });
+                        const incomeCategories = Array.from(incomeCategoriesSet);
+                        const expenseCategories = Array.from(expenseCategoriesSet);
+                        const datasets = [];
+                        incomeCategories.forEach((category, index) => {
+                          const color = incomeColors[index % incomeColors.length];
+                          datasets.push({
+                            label: `Income - ${category}`,
+                            data: getValueArray(rangeData.map(d => d.incomeBreakdown?.[category] || 0)),
+                            borderColor: color,
+                            backgroundColor: `${color}26`, // 15% opacity
+                            tension: 0.4,
+                            fill: true,
+                          });
+                        });
+                        expenseCategories.forEach((category, index) => {
+                          const color = expenseColors[index % expenseColors.length];
+                          datasets.push({
+                            label: `Expense - ${category}`,
+                            data: getValueArray(rangeData.map(d => d.expenseBreakdown?.[category] || 0)),
+                            borderColor: color,
+                            backgroundColor: `${color}26`, // 15% opacity
+                            tension: 0.4,
+                            fill: true,
+                          });
+                        });
+                        // Optionally add Balance as a separate line (not stacked)
+                        datasets.push({
+                          label: 'Balance',
+                          data: getValueArray(rangeData.map(d => d.balance), true),
+                          borderColor: '#4facfe',
+                          backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                          tension: 0.4,
+                          fill: false,
+                        });
+                        return datasets;
+                      })(),
+                    }}
                     options={{
                       ...lineRangeOptions,
                       animation: {
@@ -1585,16 +1826,15 @@ function Dashboard() {
                         line: {
                           borderWidth: 3,
                           cubicInterpolationMode: 'monotone',
-                          borderColor: ctx => ctx.datasetIndex === 2 ? '#4facfe' : undefined,
                           backgroundColor: 'transparent',
                           shadowBlur: 10,
                           shadowColor: ctx => ctx.datasetIndex === 0 ? '#00f2fe' : ctx.datasetIndex === 1 ? '#ff6b6b' : '#4facfe',
                         },
                         point: {
-                          radius: 5,
+                          radius: 2,
                           backgroundColor: ctx => ctx.datasetIndex === 0 ? '#00f2fe' : ctx.datasetIndex === 1 ? '#ff6b6b' : '#4facfe',
                           borderWidth: 1,
-                          hoverRadius: 4,
+                          hoverRadius: 3,
                           hoverBackgroundColor: ctx => ctx.datasetIndex === 0 ? '#00f2fe' : ctx.datasetIndex === 1 ? '#ff6b6b' : '#4facfe',
                           shadowBlur: 16,
                           shadowColor: ctx => ctx.datasetIndex === 0 ? '#00f2fe' : ctx.datasetIndex === 1 ? '#ff6b6b' : '#4facfe',
@@ -1646,7 +1886,17 @@ function Dashboard() {
                 Income by Category
               </Typography>
               <Box sx={{ flex: 1, position: 'relative' }}>
-                <Doughnut data={incomeDoughnutData} options={incomeDoughnutOptions} />
+                <Doughnut
+                  data={incomeDoughnutData}
+                  options={incomeDoughnutOptions}
+                  onMouseLeave={event => {
+                    const chart = event?.chart;
+                    if (chart && chart.setActiveElements) {
+                      chart.setActiveElements([]);
+                      chart.update();
+                    }
+                  }}
+                />
               </Box>
             </Paper>
           </Grid>

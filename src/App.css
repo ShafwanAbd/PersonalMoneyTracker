@@ -85,3 +85,51 @@
   0% { background-position: 100% 0; }
   100% { background-position: 0 0; }
 }
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.animated-gradient-income {
+  background: linear-gradient(90deg, #00f2fe 0%, #00ff9d 25%, #00f2fe 50%, #00ff9d 75%, #00f2fe 100%);
+  background-size: 400% 400%;
+  animation: gradientMove 2s linear infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  text-shadow:
+    0 0 2px rgba(0,242,254,0.25),
+    0 0 4px rgba(0,255,157,0.18);
+}
+
+.animated-gradient-expenses {
+  background: linear-gradient(90deg, #ff6b6b 0%, #ff3cac 25%, #ff6b6b 50%, #ff3cac 75%, #ff6b6b 100%);
+  background-size: 400% 400%;
+  animation: gradientMove 2s linear infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  text-shadow:
+    0 0 2px rgba(255,107,107,0.18),
+    0 0 4px rgba(255,60,172,0.12);
+}
+
+.animated-gradient-balance {
+  background: linear-gradient(90deg, #fff 0%, #e0e0e0 25%, #fff 50%, #e0e0e0 75%, #fff 100%);
+  background-size: 400% 400%;
+  animation: gradientMove 2s linear infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  text-shadow:
+    0 0 2px rgba(255,255,255,0.18),
+    0 0 4px rgba(224,224,224,0.12);
+}
